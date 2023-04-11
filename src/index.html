@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="./WebGL_Logo.png" />
+    <link rel="stylesheet" href="./styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <title>3D Web Based CAD</title>
+  </head>
+  <body>
+    <div class="container ml-2">
+      <div class="canvas-container">
+        <canvas class="canvas" id="canvas"></canvas>
+      </div>
+
+      <div id="modal" class="modal">
+        <div class="modal-content">
+          <span class="close" id="close" onclick="document.getElementById('modal').style.display = 'none'">&times;</span>
+          <div class="modal-title" id="modal-title">Help</div>
+          <div class="modal-p" id="modal-p" style="text-align: left;">
+            <b>Translation : </b>
+            Translasi dapat dilakukan ke kiri (-x) dan kanan(+x), ke atas(+y) dan bawah(-y), maupun mendekati(+z) dan menjauhi(-z) layar.<br/>
+            <br/>
+            <b>Rotation : </b>
+            Rotasi dapat dilakukan terhadap sumbu x, y, maupun z. <br/>
+            <br/>
+            <b>Scale : </b>
+            Scaling terhadap sumbu x menyebabkan objek menjadi lebih lebar ataupun ramping.
+            Scaling terhadap sumbu y menyebabkan objek menjadi lebih tinggi.
+            Scaling terhadap sumbu z menyebabkan objek meregang ke arah belakang dan depan. <br/>
+            <br/>
+            <b>Camera View Radius : </b>
+            Camera View Radius dapat digunakan untuk mengubah jarak kamera dengan objek. <br/>
+            <br/>
+            <b>Camera View Angle : </b>
+            Camera View Angle dapat digunakan untuk mengubah sudut pandang kamera mengitari objek. <br/>
+            <br/>
+            <b>Projection : </b>
+            Projection dapat diubah menjadi orthographic projection, oblique projection atau perspective projection. Default adalah perspective.<br/>
+            <br/>
+            <b>Shading : </b>
+            Shading dapat diaktifkan dengan mengklik checkbox. <br/>
+            <br/>
+            <b>Input & Output : </b>
+            Untuk melakukan load hollow object pada canvas, gunakan input file yang tersedia di panel kanan. <br/>
+            <ol style="text-align: left;">
+              <li>Klik Choose file</li>
+              <li>Pilih file berekstensi `.json` yang telah disediakan pada `/model`</li>
+              <li>Klik `Load`</li>
+              <li>Model sudah ter-load pada canvas</li>
+            </ol>
+            <br/>
+            Untuk menyimpan 3D hollow object, gunakan button 'Save' yang tersedia di panel kanan. <br/>
+            <ol>
+              <li>Jika ingin menyimpan dengan nama file tertentu, masukkan nama file pada input teks yang tersedia (tanpa ekstensi).</li>
+              <li>Klik `save`.</li>
+              <li>Model tersimpan pada `Downloads` dengan nama default `hollowobject.json` atau dengan nama file custom yang telah dimasukkan pada input teks dengan ekstensi JSON.</li>
+            </ol>
+            <br/>
+            <b>Animation : </b>
+            Untuk melakukan animasi, klik `Auto Rotate` pada panel kanan. <br/>
+            <br/>
+            <b>Keys : </b>
+            <ul>
+              <li>Arrow Left (<): mengubah angle kamera ke kiri.</li>
+              <li>Arrow Right (>): mengubah angle kamera ke kanan.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="tools-container">
+        <div class="flex flex-col ml-2">
+          <div class="text-lg font-bold mb-2">Translation</div>
+          <div class="flex flex-col mb-2">
+            <div class="flex flex-row">
+              <div class="mr-2">x:</div>
+              <input type="range" min="-3" max="3" step="0.01" value="0" class="slider" id="tx_slider">
+            </div>
+            <div class="flex flex-row">
+              <div class="mr-2">y:</div>
+              <input type="range" min="-5" max="5" step="0.01" value="0" class="slider" id="ty_slider">
+            </div>
+            <div class="flex flex-row">
+              <div class="mr-2">z:</div>
+              <input type="range" min="-5" max="5" step="0.01" value="0" class="slider" id="tz_slider">
+            </div>
+          </div>
+
+          <div class="text-lg font-bold mb-2">Rotation</div>
+          <div class="flex flex-col mb-2">
+            <div class="flex flex-row">
+              <div class="mr-2">x:</div>
+              <input type="range" min="0" max="6.28" step="0.01" value="0" class="slider" id="rx_slider">
+            </div>
+            <div class="flex flex-row">
+              <div class="mr-2">y:</div>
+              <input type="range" min="0" max="6.28" step="0.01" value="0" class="slider" id="ry_slider">
+            </div>
+            <div class="flex flex-row">
+              <div class="mr-2">z:</div>
+              <input type="range" min="0" max="6.28" step="0.01" value="0" class="slider" id="rz_slider">
+            </div>
+          </div>
+
+          <div class="text-lg font-bold mb-2">Scale</div>
+          <div class="flex flex-col mb-2">
+            <div class="flex flex-row">
+              <div class="mr-2">x:</div>
+              <input type="range" min="-5" max="5" step="0.01" value="1" class="slider" id="sx_slider">
+            </div>
+            <div class="flex flex-row">
+              <div class="mr-2">y:</div>
+              <input type="range" min="-5" max="5" step="0.01" value="1" class="slider" id="sy_slider">
+            </div>
+            <div class="flex flex-row">
+              <div class="mr-2">z:</div>
+              <input type="range" min="-5" max="5" step="0.01" value="1" class="slider" id="sz_slider">
+            </div>
+          </div>
+
+          <div class="text-lg font-bold mb-2">Camera View Radius</div>
+          <input type="range" min="0" max="100" step="0.01" value="5" class="slider" id="cam_r_slider">
+          
+          <div class="text-lg font-bold mb-2">Camera View Angle</div>
+          <input type="range" min="-360" max="360" step="0.01" value="0" class="slider" id="cam_a_slider">
+          
+          <div class="flex flex-col mb-2">
+            <div class="flex flex-row">
+              <div class="mr-2 text-lg font-bold mb-2 mt-2" >Projection Type :</div>
+              <select class="dropdown" id="mode_select" name="mode_select">
+                <option value="perspective">Perspective</option>
+                <option value="orthographic">Orthographic</option>
+                <option value="oblique">Oblique</option>
+              </select>
+            </div>
+
+            <div class="flex flex-row mt-2 ml-2 mr-2 gap-x-2">
+              <button id="help_btn">Help</button>
+              <button id="default_btn">Set Default</button>
+              <button id="rotate_btn">Auto Rotate</button>
+            </div>
+
+            <div class="flex flex-row mt-2 ml-2 mr-2 gap-x-2">
+              <div class="flex flex-row">
+                <input type="text" id="save_filename" placeholder="hollowobject" class="input">
+                <button id="save_btn">Save</button>
+              </div>
+            </div>
+
+            <div class="flex flex-row mt-2 ml-2 mr-2 gap-x-2">
+                <input type="file" accept=".json" id="fileInput">
+                <button id="loadButton">Load</button>
+            </div>
+
+            <label class="mt-2">
+              <input type="checkbox" name="shading" id="shading">
+              Shading
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src="./modules/main.js" type="module"></script>
+  </body>
+</html>
