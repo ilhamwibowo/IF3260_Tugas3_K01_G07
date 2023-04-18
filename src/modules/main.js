@@ -4,6 +4,8 @@ import { m4 } from "./utils/mat4.js";
 import { Object3D } from "./Object3D.js";
 import { Shader } from "./shaders/shaderProgram.js";
 import { loadFile } from "./utils/loader.js";
+import { createHuman } from "./models/Human.js";
+import { ArticulatedObject3D } from "./ArticulatedObject3D.js";
 
 /**
  * run with http-server
@@ -82,8 +84,24 @@ function main() {
 
   // Set up shaders and cube properties
   const shader = new Shader(gl, vertexShaderSource, fragmentShaderSource);
-  var { vertices, colors, indices, normals } = createCube();
-  var cube = new Object3D(gl, vertices, colors, indices, normals, shader);
+
+  // // Create the root object (e.g., torso)
+  // var { vertices, colors, indices, normals } = createCube();
+  // var cube = new ArticulatedObject3D(gl, vertices, colors, indices, normals, shader);
+  // cube.translate(-5, 0, -5);
+  // // cube.scale(1, 2, 0.5);
+
+  // // Create a child object (e.g., arm)
+  // var { vertices, colors, indices, normals } = createCube();
+  // var childObject = new ArticulatedObject3D(gl, vertices, colors, indices, normals, shader);
+  // childObject.translate(5, 0, 0);
+  // // childObject.scale(0.5, 1, 0.5);
+
+
+  var cube = createHuman(gl, shader);
+
+  // // Add child object to root object
+  // cube.addChild(childObject);
 
   let enableShading = false;
   
@@ -140,12 +158,15 @@ function main() {
     loadFile(
       file,
       (fileContent) => {
-        vertices = fileContent.vertices;
-        colors = fileContent.colors;
-        indices = fileContent.indices;
-        normals = fileContent.normals;
+        // vertices = fileContent.vertices;
+        // colors = fileContent.colors;
+        // indices = fileContent.indices;
+        // normals = fileContent.normals;
 
+        // console.log(fileContent);
         cube = new Object3D(gl, fileContent.vertices, fileContent.colors, fileContent.indices, fileContent.normals, shader);
+        // cube = new ArticulatedObject3D(gl, fileContent.vertices, fileContent.colors, fileContent.indices, fileContent.normals, shader);
+
         resetInputs();
         drawScene();
       },
