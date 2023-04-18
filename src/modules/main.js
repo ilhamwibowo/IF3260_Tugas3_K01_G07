@@ -324,6 +324,19 @@ function main() {
     }
   }
 
+  // Event listener for texture
+  // document.getElementById("mode_select").addEventListener("change", function() {
+  //   projection_type = this.value;
+  //   if (!rotate) drawScene();
+  // });
+  document.getElementById("texture_select").addEventListener("change", function() {
+    texture = this.value;
+  });
+
+  document.getElementById("texture_s_select").addEventListener("change", function() {
+    texture_s = this.value;
+  });
+
   
   /////////// drawwwwzzzz /////////////////
   // Draw scene for each frame
