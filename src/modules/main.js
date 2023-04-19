@@ -487,7 +487,7 @@ function main() {
     const modelViewMatrix = m4.multiply(viewMatrix, selectedObject.modelMatrix);
     const normalMatrix = m4.transpose(m4.inverse2(modelViewMatrix));
 
-    console.log(selectedObject);
+    // console.log(selectedObject);
     selectedObject.draw(projectionMatrix, modelViewMatrix, normalMatrix, viewLightDirection, enableShading);
 
   }

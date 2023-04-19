@@ -20,8 +20,6 @@ class Object3D {
 
     let imageTexture = TEXTURE_MAP.image(this.gl);
     this.textures = [imageTexture];
-    
-    console.log(textureCoord);
 
     // Model matrix representing object's transformations
     this.modelMatrix = m4.identity(); 
