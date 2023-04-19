@@ -9,10 +9,14 @@ import { makeCube } from "./models/Cube.js";
 import { ArticulatedObject3D } from "./ArticulatedObject3D.js";
 
 /**
- * run with http-server
- * Need to process inputs.
- * Event listeners not yet all implemented. 
- *  
+  TODOS : 
+  - Fix rotation bug
+  - add camera controller and projection, for canvas single, 
+  - Save load set default
+  - Animation
+  - Texture mapping
+  - Modify front end UI
+  - Refactor (for readability) and cleaning
  */
 
 const vertexShaderSource = `
@@ -100,7 +104,9 @@ var projection_type = 'perspective';
 function main() {
   const canvas = document.querySelector('#canvas');
   const gl = canvas.getContext('webgl');
-  const fileSelector = document.getElementById('fileInput');
+
+  const canvas_single = document.querySelector('#canvas-single');
+  const gl_single = canvas_single.getContext('webgl');
 
   if (!gl) {
     console.error('WebGL not supported');
@@ -109,24 +115,17 @@ function main() {
 
   // Set up shaders and cube properties
   const shader = new Shader(gl, vertexShaderSource, fragmentShaderSource);
+  const shader_single = new Shader(gl_single, vertexShaderSource, fragmentShaderSource);
 
-  // // Create the root object (e.g., torso)
-  // var { vertices, colors, indices, normals } = createCube();
-  // var cube = new ArticulatedObject3D(gl, vertices, colors, indices, normals, shader);
-  // cube.translate(-5, 0, -5);
-  // // cube.scale(1, 2, 0.5);
-
-  // // Create a child object (e.g., arm)
-  // var { vertices, colors, indices, normals } = createCube();
-  // var childObject = new ArticulatedObject3D(gl, vertices, colors, indices, normals, shader);
-  // childObject.translate(5, 0, 0);
-  // // childObject.scale(0.5, 1, 0.5);
-
-
-  var cube = makeCube(gl, shader);
-
-  // // Add child object to root object
-  // cube.addChild(childObject);
+  // Cube is the main object
+  // selectedObject is the object in the second canvas (components)
+  // selectedCUbePart is part of cube, to apply transformations
+  var cube = createHuman(gl, shader);
+  var selectedObject = createHuman(gl_single, shader_single);
+  var selectedCubePart = cube;
+  // var cube = makeCube(gl, shader);
+  // var selectedObject = makeCube(gl_single, shader_single);
+  // var selectedCubePart = cube;
 
   let enableShading = false;
   
@@ -173,7 +172,7 @@ function main() {
   });
   
 
-  /////////// Event Listeners ////////////
+  ////////////////////////////////// Event Listeners //////////////////////////////
   document.getElementById("loadButton").addEventListener("click", () => {
     const fileInput = document.getElementById("fileInput");
     const file = fileInput.files[0];
@@ -207,7 +206,8 @@ function main() {
   let rx_prev = 0;
   document.getElementById("rx_slider").oninput = function () {
     let value = document.getElementById("rx_slider").value;
-    cube.rotateX(value - rx_prev);
+    selectedObject.rotateX(value - rx_prev);
+    selectedCubePart.rotateX(value - rx_prev);
     rx_prev = value;
     if (!rotate) drawScene();
   };
@@ -215,7 +215,8 @@ function main() {
   let ry_prev = 0;
   document.getElementById("ry_slider").oninput = function () {
     let value = document.getElementById("ry_slider").value;
-    cube.rotateY(value - ry_prev);
+    selectedObject.rotateY(value - ry_prev);
+    selectedCubePart.rotateY(value - ry_prev);
     ry_prev = value;
     if (!rotate) drawScene();
   };
@@ -223,7 +224,8 @@ function main() {
   let rz_prev = 0;
   document.getElementById("rz_slider").oninput = function () {
     let value = document.getElementById("rz_slider").value;
-    cube.rotateZ(value - rz_prev);
+    selectedObject.rotateZ(value - rz_prev);
+    selectedCubePart.rotateZ(value - rz_prev);
     rz_prev = value;
     if (!rotate) drawScene();
   };
@@ -231,7 +233,8 @@ function main() {
   let tx_prev = 0;
   document.getElementById("tx_slider").oninput = function () {
     let value = document.getElementById("tx_slider").value;
-    cube.translate(value - tx_prev, 0, 0);
+    selectedObject.translate(value - tx_prev, 0, 0);
+    selectedCubePart.translate(value - tx_prev, 0, 0);
     tx_prev = value;
     if (!rotate) drawScene();
   };
@@ -239,7 +242,8 @@ function main() {
   let ty_prev = 0;
   document.getElementById("ty_slider").oninput = function () {
     let value = document.getElementById("ty_slider").value;
-    cube.translate(0, value - ty_prev, 0);
+    selectedObject.translate(0, value - ty_prev, 0);
+    selectedCubePart.translate(0, value - ty_prev, 0);
     ty_prev = value;
     if (!rotate) drawScene();
   };
@@ -247,7 +251,8 @@ function main() {
   let tz_prev = 0;
   document.getElementById("tz_slider").oninput = function () {
     let value = document.getElementById("tz_slider").value;
-    cube.translate(0, 0, value - tz_prev);
+    selectedObject.translate(0, 0, value - tz_prev);
+    selectedCubePart.translate(0, 0, value - tz_prev);
     tz_prev = value;
     if (!rotate) drawScene();
   };
@@ -255,7 +260,8 @@ function main() {
   let sx_prev = 1;
   document.getElementById("sx_slider").oninput = function () {
     let value = document.getElementById("sx_slider").value;
-    cube.scale(value / sx_prev, 1, 1);
+    selectedObject.scale(value / sx_prev, 1, 1);
+    selectedCubePart.scale(value / sx_prev, 1, 1);
     sx_prev = value;
     if (!rotate) drawScene();
   };
@@ -263,7 +269,8 @@ function main() {
   let sy_prev = 1;
   document.getElementById("sy_slider").oninput = function () {
     let value = document.getElementById("sy_slider").value;
-    cube.scale(1, value / sy_prev, 1);
+    selectedObject.scale(1, value / sy_prev, 1);
+    selectedCubePart.scale(1, value / sy_prev, 1);
     sy_prev = value;
     if (!rotate) drawScene();
   };
@@ -271,7 +278,8 @@ function main() {
   let sz_prev = 1;
   document.getElementById("sz_slider").oninput = function () {
     let value = document.getElementById("sz_slider").value;
-    cube.scale(1, 1, value / sz_prev);
+    selectedObject.scale(1, 1, value / sz_prev);
+    selectedCubePart.scale(1, 1, value / sz_prev);
     sz_prev = value;
     if (!rotate) drawScene();
   };
@@ -394,9 +402,97 @@ function main() {
     texture_s = this.value;
   });
 
+
+  function createButton(object, baseObject, indent = 0) {
+    const button = document.createElement("button");
+    button.textContent = object.name || "Component";
+    button.style.marginLeft = indent * 20 + "px";
+    button.style.display = "block";
+    
+    button.onclick = () => {
+      // Set the currently selected object to the one the button represents
+      selectedObject = object;
+      selectedCubePart = baseObject;
+      drawSelectedObject();
+    };
+    return button;
+  }
+
+
+  function createComponentTree(object, baseObject,  container, depth = 0) {
+    const button = createButton(object, baseObject, depth);
+    container.appendChild(button);
   
-  /////////// drawwwwzzzz /////////////////
-  // Draw scene for each frame
+    if (object.children) {
+      for (let i = 0; i < object.children.length; i++) {
+        const child = object.children[i];
+        const baseChild = baseObject.children[i];
+        createComponentTree(child, baseChild, container, depth + 1);
+      }
+    }
+  }
+  
+  const buttonContainer = document.getElementById("button-container");
+  createComponentTree(selectedObject, cube, buttonContainer);
+
+
+  //////////////////////////////////////////// DRAW FUNCTIONS //////////////////////////////////
+  // Draw in the second canvas
+  function drawSelectedObject() {
+    // Clear canvas and setup viewport.
+    resizeCanvasToDisplaySize(gl_single.canvas);
+    gl_single.viewport(0, 0, gl_single.canvas.width, gl_single.canvas.height);
+    gl_single.clearColor(0.8, 0.8, 0.8, 1);
+    gl_single.clear(gl_single.COLOR_BUFFER_BIT | gl_single.DEPTH_BUFFER_BIT);
+    gl_single.enable(gl_single.DEPTH_TEST);
+
+    var projectionMatrix = m4.identity();
+
+    // Set up projection matrix
+    if (projection_type == "perspective") {
+      projectionMatrix = m4.perspective(fov, aspect, near, far);
+    }
+    else if (projection_type == "orthographic") {
+      projectionMatrix = m4.orthographic(projectionMatrix, left, right, bottom, top, near, far);
+    }
+    else if (projection_type == "oblique") {
+      var obliqueMatrix = m4.identity();
+      var orthoMatrix = m4.identity();
+
+      obliqueMatrix = m4.oblique(projectionMatrix, theta, phi);
+      orthoMatrix = m4.orthographic(projectionMatrix, left, right, bottom, top, near, far);
+      
+      projectionMatrix = m4.translate( m4.multiply(obliqueMatrix, orthoMatrix), 1.75, 1.75, 1.75);
+    }
+
+    // Use matrix math to compute a position on a circle where
+    // the camera is
+    var cameraMatrix = m4.yRotation(cameraAngleRadians);
+    cameraMatrix = m4.translate(cameraMatrix, 0, 0, radius);
+
+    // Get the camera's position from the matrix we computed
+    var cameraPosition = [
+      cameraMatrix[12],
+      cameraMatrix[13],
+      cameraMatrix[14],
+    ];
+
+    // Set up camera matrix, and get the view matrix relative to the camera
+    var cameraMatrix = m4.lookAt(cameraPosition, target, up);
+    var viewMatrix = m4.inverse2(cameraMatrix);
+
+    // This is for the light to be at fixed location when the camera moves
+    const viewLightDirection = m4.transformDirection(viewMatrix, lightDirection);
+
+    const modelViewMatrix = m4.multiply(viewMatrix, selectedObject.modelMatrix);
+    const normalMatrix = m4.transpose(m4.inverse2(modelViewMatrix));
+
+    console.log(selectedObject);
+    selectedObject.draw(projectionMatrix, modelViewMatrix, normalMatrix, viewLightDirection, enableShading);
+
+  }
+
+  // Draw in the main canvas
   function drawScene() {
     // Clear canvas and setup viewport.
     resizeCanvasToDisplaySize(gl.canvas);
@@ -445,17 +541,13 @@ function main() {
 
     const modelViewMatrix = m4.multiply(viewMatrix, cube.modelMatrix);
     const normalMatrix = m4.transpose(m4.inverse2(modelViewMatrix));
-
+    
     // Combined matrix
     // const matrix = m4.multiply(projectionMatrix, modelViewMatrix);
     
     cube.draw(projectionMatrix, modelViewMatrix, normalMatrix, viewLightDirection, enableShading, textureMode);
-    
-    if (rotate) {
-      cube.rotateX(0.01);
-      cube.rotateY(0.01);
-      requestAnimationFrame(drawScene);
-    }
+    drawSelectedObject();
+
   }
 
   drawScene();
