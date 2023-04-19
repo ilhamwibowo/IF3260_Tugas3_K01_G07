@@ -1,23 +1,31 @@
 // Object3D.js
 import { m4 } from "./utils/mat4.js";
+import { TEXTURE_MAP, toTextureMode } from "./Texture.js";
 /** Problem : 
 1. Transformations only done in modelMatrix.  
 2. Algorihtm to get normals from vertices and indices not yet implemented.
 **/
 
 class Object3D {
-  constructor(gl, vertices, colors, indices, normals, shaderProgram) {
+  constructor(gl, vertices, colors, indices, normals, shaderProgram, textureCoord, textureMode) {
     this.gl = gl;
     this.indices = indices;
     this.shaderProgram = shaderProgram;
     this.vertices = vertices;
     this.colors = colors;
     this.normals = normals;
+    this.textureCoord = textureCoord;
+    this.textureMode = textureMode;
     this.savedBuffers = null;
+
+    let imageTexture = TEXTURE_MAP.image(this.gl);
+    this.textures = [imageTexture];
     
+    console.log(textureCoord);
+
     // Model matrix representing object's transformations
     this.modelMatrix = m4.identity(); 
-    this.initBuffers(vertices, colors, indices, normals);
+    this.initBuffers(vertices, colors, indices, normals, textureCoord);
   }
 
   // Transformations
@@ -76,12 +84,13 @@ class Object3D {
 
   
   // Initialize necessary buffers for object.
-  initBuffers(vertices, colors, indices, normals) {
+  initBuffers(vertices, colors, indices, normals, textureCoord) {
     this.buffers = {
       position: this.createAndSetupBuffer(new Float32Array(vertices), this.gl.ARRAY_BUFFER),
       color: this.createAndSetupBuffer(new Float32Array(colors), this.gl.ARRAY_BUFFER),
       index: this.createAndSetupBuffer(new Uint16Array(indices), this.gl.ELEMENT_ARRAY_BUFFER),
       normal: this.createAndSetupBuffer(new Float32Array(normals), this.gl.ARRAY_BUFFER),
+      textureCoord: this.createAndSetupBuffer(new Float32Array(textureCoord), this.gl.ARRAY_BUFFER),
     };
   }
 
@@ -93,7 +102,7 @@ class Object3D {
     return buffer;
   }
 
-  draw(projectionMatrix, modelViewMatrix, normalMatrix, lightDirection, enableShading) {
+  draw(projectionMatrix, modelViewMatrix, normalMatrix, lightDirection, enableShading, textureMode) {
     // Tell webgl to use our program .
     this.gl.useProgram(this.shaderProgram.program);
 
@@ -112,12 +121,32 @@ class Object3D {
 
     this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.buffers.index);
 
+    this.gl.enableVertexAttribArray(this.shaderProgram.attributeLocations.textureCoord);
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers.textureCoord);
+    this.gl.vertexAttribPointer(this.shaderProgram.attributeLocations.textureCoord, 2, this.gl.FLOAT, false, 0, 0);
+
     // Set uniforms.
     this.gl.uniformMatrix4fv(this.shaderProgram.uniformLocations.normalMatrix, false, normalMatrix);
     this.gl.uniformMatrix4fv(this.shaderProgram.uniformLocations.projectionMatrix, false, projectionMatrix);
     this.gl.uniformMatrix4fv(this.shaderProgram.uniformLocations.modelViewMatrix, false, modelViewMatrix);
     this.gl.uniform3fv(this.shaderProgram.uniformLocations.lightDirection, lightDirection);
     this.gl.uniform1i(this.shaderProgram.uniformLocations.enableShading, enableShading);
+
+    // Set the texture on or off.
+    this.gl.uniform1i(this.shaderProgram.uniformLocations.textureMode, 0);
+
+    // Texture image
+    this.gl.uniform1i(this.shaderProgram.uniformLocations.textureImage, 0);
+    this.gl.activeTexture(this.gl.TEXTURE0);
+    this.gl.bindTexture(this.gl.TEXTURE_2D, this.textures[0])
+    // Texture environment.
+    // this.gl.uniform1i(this.shaderProgram.uniformLocations.textureEnvironment, 1);
+    // this.gl.activeTexture(this.gl.TEXTURE1);
+    // this.gl.bindTexture(this.gl.TEXTURE_CUBE_MAP, this.textures[1]);
+    // Texture bump.
+    // this.gl.uniform1i(this.shaderProgram.uniformLocations.textureBump, 2);
+    // this.gl.activeTexture(this.gl.TEXTURE2);
+    // this.gl.bindTexture(this.gl.TEXTURE_2D, this.textures[2]);
 
     // Drawwzzz.
     this.gl.drawElements(this.gl.TRIANGLES, this.indices.length, this.gl.UNSIGNED_SHORT, 0);

@@ -10,6 +10,7 @@ export class Shader {
             position: gl.getAttribLocation(this.program, "a_position"),
             color: gl.getAttribLocation(this.program, "a_color"),
             normal: gl.getAttribLocation(this.program, "a_normal"),
+            textureCoord: gl.getAttribLocation(this.program, "a_textureCoord"),
         };
 
         this.uniformLocations = {
@@ -18,6 +19,10 @@ export class Shader {
             normalMatrix: gl.getUniformLocation(this.program, "u_normalMatrix"),
             lightDirection: gl.getUniformLocation(this.program, "u_lightDirection"),
             enableShading: gl.getUniformLocation(this.program, "u_enableShading"),
+            textureMode: gl.getUniformLocation(this.program, "u_textureMode"),
+            textureImage: gl.getUniformLocation(this.program, "u_texture_image"),
+            textureEnvironment: gl.getUniformLocation(this.program, "u_texture_environment"),
+            textureBump: gl.getUniformLocation(this.program, "u_texture_bump"),
         };
     }
 

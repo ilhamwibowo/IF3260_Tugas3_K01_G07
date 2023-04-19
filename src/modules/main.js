@@ -5,6 +5,7 @@ import { Object3D } from "./Object3D.js";
 import { Shader } from "./shaders/shaderProgram.js";
 import { loadFile } from "./utils/loader.js";
 import { createHuman } from "./models/Human.js";
+import { makeCube } from "./models/Cube.js";
 import { ArticulatedObject3D } from "./ArticulatedObject3D.js";
 
 /**
@@ -22,11 +23,13 @@ const vertexShaderSource = `
   attribute vec4 a_position;
   attribute vec4 a_color;
   attribute vec3 a_normal;
+  attribute vec2 a_textureCoord;
 
   varying vec4 v_color;
   varying vec3 v_normal;
   varying vec3 v_pos;
   varying vec3 v_N;
+  varying vec2 v_textureCoord;
 
   uniform mat4 u_modelViewMatrix;
   uniform mat4 u_projectionMatrix;
@@ -40,6 +43,9 @@ const vertexShaderSource = `
     v_N = normalize((u_modelViewMatrix * vec4(a_normal, 0.0)).xyz);
     v_color = a_color;
     v_normal = mat3(u_normalMatrix) * a_normal;
+
+    // Pass the texcoord to the fragment shader.
+    v_textureCoord = a_textureCoord;
   
   }
 `
@@ -58,10 +64,24 @@ const fragmentShaderSource = `
   uniform vec3 u_lightDirection;
   uniform bool u_enableShading;
 
-  void main() {
-    vec3 normal = normalize(v_normal);
-    float lightIntensity = max(dot(normal, u_lightDirection), 0.0);
+  // The texture
+  uniform sampler2D u_texture_image;
+  uniform samplerCube u_texture_environment;
+  uniform sampler2D u_texture_bump;
 
+  // variable for Bump Mapping
+  varying mat3 v_tbn;
+
+  // texture parameters
+  uniform int u_textureMode;
+  varying vec2 v_textureCoord;
+
+  void main() {
+    // normalize the normal
+    vec3 normal = normalize(v_normal);
+
+    // lightning effect
+    float lightIntensity = max(dot(normal, u_lightDirection), 0.0);
     vec3 ambient = ambientColor * v_color.rgb;
     vec3 diffuse = diffuseColor * v_color.rgb * lightIntensity;
     vec3 H = normalize(u_lightDirection - v_pos);
@@ -71,6 +91,11 @@ const fragmentShaderSource = `
 
     vec4 shadedColor = vec4(ambient + diffuse + specular, v_color.a);
     gl_FragColor = u_enableShading ? shadedColor : v_color;
+
+    // set the color to the texture
+    if (u_textureMode == 0) {
+      gl_FragColor = texture2D(u_texture_image, v_textureCoord);
+    } 
   }
 `;
 
@@ -98,6 +123,9 @@ function main() {
   var cube = createHuman(gl, shader);
   var selectedObject = createHuman(gl_single, shader_single);
   var selectedCubePart = cube;
+  // var cube = makeCube(gl, shader);
+  // var selectedObject = makeCube(gl_single, shader_single);
+  // var selectedCubePart = cube;
 
   let enableShading = false;
   
@@ -125,6 +153,9 @@ function main() {
   const lightDirection = [0.5, 0.7, 1];
 
   var rotate = false;
+
+  // Texture Mode
+  var textureMode;
 
   // This is for testing purposes. Will be changed in future development
   const cameraSpeed = m4.degToRad(1);
@@ -160,7 +191,7 @@ function main() {
         // normals = fileContent.normals;
 
         // console.log(fileContent);
-        cube = new Object3D(gl, fileContent.vertices, fileContent.colors, fileContent.indices, fileContent.normals, shader);
+        cube = new Object3D(gl, fileContent.vertices, fileContent.colors, fileContent.indices, fileContent.normals, shader, fileContent.textureCoord, 0);
         // cube = new ArticulatedObject3D(gl, fileContent.vertices, fileContent.colors, fileContent.indices, fileContent.normals, shader);
 
         resetInputs();
@@ -290,7 +321,7 @@ function main() {
 
   // Event listener for set default
   document.getElementById("default_btn").addEventListener("click", function() {
-    cube = new Object3D(gl, vertices, colors, indices, normals, shader);
+    cube = new Object3D(gl, vertices, colors, indices, normals, shader, textureCoord, textureMode);
 
     resetInputs();
     
@@ -349,6 +380,27 @@ function main() {
       canvas.height = height;
     }
   }
+
+  // Event listener for texture
+  // document.getElementById("mode_select").addEventListener("change", function() {
+  //   projection_type = this.value;
+  //   if (!rotate) drawScene();
+  // });
+  document.getElementById("texture_select").addEventListener("change", function() {
+    if (this.value == "none") {
+      this.textureMode = -1;
+    } else if (this.value == "image") {
+      this.textureMode = 0;
+    } else if (this.value == "environment") {
+      this.textureMode = 1;
+    } else if (this.value == "bump") {
+      this.textureMode = 2;
+    }
+  });
+
+  document.getElementById("texture_s_select").addEventListener("change", function() {
+    texture_s = this.value;
+  });
 
 
   function createButton(object, baseObject, indent = 0) {
@@ -493,7 +545,7 @@ function main() {
     // Combined matrix
     // const matrix = m4.multiply(projectionMatrix, modelViewMatrix);
     
-    cube.draw(projectionMatrix, modelViewMatrix, normalMatrix, viewLightDirection, enableShading);
+    cube.draw(projectionMatrix, modelViewMatrix, normalMatrix, viewLightDirection, enableShading, textureMode);
     drawSelectedObject();
 
   }
