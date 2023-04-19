@@ -79,7 +79,7 @@
 
       <div class="tools-container">
         <div class="flex flex-col ml-2">
-          <div class="text-lg font-bold mb-2">Translation</div>
+          <div class="text-md font-bold mb-2">Translation</div>
           <div class="flex flex-col mb-2">
             <div class="flex flex-row">
               <div class="mr-2">x:</div>
@@ -95,7 +95,7 @@
             </div>
           </div>
 
-          <div class="text-lg font-bold mb-2">Rotation</div>
+          <div class="text-md font-bold mb-2">Rotation</div>
           <div class="flex flex-col mb-2">
             <div class="flex flex-row">
               <div class="mr-2">x:</div>
@@ -127,21 +127,49 @@
             </div>
           </div>
 
-          <div class="text-lg font-bold mb-2">Camera View Radius</div>
-          <input type="range" min="0" max="100" step="0.01" value="5" class="slider" id="cam_r_slider">
-          
-          <div class="text-lg font-bold mb-2">Camera View Angle</div>
-          <input type="range" min="-360" max="360" step="0.01" value="0" class="slider" id="cam_a_slider">
-          
-          <div class="text-lg font-bold mb-2">Camera View Radius Object</div>
-          <input type="range" min="0" max="100" step="0.01" value="5" class="slider" id="cam_r_o_slider">
-          
-          <div class="text-lg font-bold mb-2">Camera View Angle Object</div>
-          <input type="range" min="-360" max="360" step="0.01" value="0" class="slider" id="cam_a_o_slider">
+          <div class="flex flex-row mb-2">
+            <div class="flex flex-col mr-2">
+              <div class="text-md font-bold mb-2">Camera View Radius</div>
+              <input type="range" min="0" max="100" step="0.01" value="5" class="slider" id="cam_r_slider">
+              
+              <div class="text-md font-bold mb-2">Camera View Angle</div>
+              <input type="range" min="-360" max="360" step="0.01" value="0" class="slider" id="cam_a_slider">
+            </div>
+            <div class="flex flex-col">
+              <div class="text-md font-bold mb-2">Camera View Radius Object</div>
+              <input type="range" min="0" max="100" step="0.01" value="5" class="slider" id="cam_r_o_slider">
+              
+              <div class="text-md font-bold mb-2">Camera View Angle Object</div>
+              <input type="range" min="-360" max="360" step="0.01" value="0" class="slider" id="cam_a_o_slider">
+            </div>
+          </div>
+
+          <div class="animation-columns">
+            <div>
+              <div class="horizontal-box justify-center mb-2">
+                <button id="play-button">Play</button>
+                <button id="pause-button">Pause</button>
+              </div>
+    
+              <div class="horizontal-box justify-start mb-2">
+                <span class="font-bold text-md mr-2">Frame</span>
+                <button id="first-frame">&lt;&lt;</button>
+                <button id="prev-frame">&lt;</button>
+                <span id="current-frame">0</span>
+                <button id="next-frame">&gt;</button>
+                <button id="last-frame">&gt;&gt;</button>
+              </div>
+            </div>
+            
+            <div>
+              <div class="text-md mb-1">Time Between Frames</div>
+              <input type="range" min="0" max="2" step="0.1" value="5" class="slider" id="time_between_frames">
+            </div>
+          </div>
 
           <div class="flex flex-col mb-2">
             <div class="flex flex-row">
-              <div class="mr-2 text-lg font-bold mb-2 mt-2" >Projection Type :</div>
+              <div class="mr-2 text-md font-bold mb-2 mt-2" >Projection Type :</div>
               <select class="dropdown" id="mode_select" name="mode_select">
                 <option value="perspective">Perspective</option>
                 <option value="orthographic">Orthographic</option>
@@ -150,14 +178,14 @@
             </div>
 
             <div class="flex flex-row">
-              <div class="mr-2 text-lg font-bold mb-2 mt-2" >Select Texture :</div>
+              <div class="mr-2 text-md font-bold mb-2 mt-2" >Select Texture :</div>
               <select class="dropdown" id="texture_select" name="texture_select">
                 <option value="none">None</option>
                 <option value="image">Image</option>
                 <option value="environment">Environment</option>
                 <option value="bump">Bump</option>
               </select>
-              <div class="mr-2 text-lg font-bold mb-2 mt-2" >Select Texture S:</div>
+              <div class="mr-2 text-md font-bold mb-2 mt-2" >Select Texture S:</div>
               <select class="dropdown" id="texture_s_select" name="texture_s_select">
                 <option value="none">None</option>
                 <option value="image">Image</option>
