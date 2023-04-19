@@ -3,8 +3,8 @@ import { Object3D } from "./Object3D.js";
 import { m4 } from "./utils/mat4.js";
 
 class ArticulatedObject3D extends Object3D {
-  constructor(gl, vertices, colors, indices, normals, shaderProgram) {
-    super(gl, vertices, colors, indices, normals, shaderProgram);
+  constructor(gl, vertices, colors, indices, normals, shaderProgram, textureCoord) {
+    super(gl, vertices, colors, indices, normals, shaderProgram, textureCoord, 0);
     this.children = [];
   }
 

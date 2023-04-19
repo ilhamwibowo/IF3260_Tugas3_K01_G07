@@ -3,10 +3,10 @@ export function createCube() {
     // duplicates, if color same no need
     const vertices = [
       // Front face
-      -0.5, -0.5,  0.5,
-       0.5, -0.5,  0.5,
-       0.5,  0.5,  0.5,
-      -0.5,  0.5,  0.5,
+      -0.5, -0.5,  0.5, // tl
+       0.5, -0.5,  0.5, // tr
+       0.5,  0.5,  0.5, // br
+      -0.5,  0.5,  0.5, // bl
 
       // Back face
       -0.5, -0.5, -0.5,
@@ -85,6 +85,40 @@ export function createCube() {
       20, 21, 22,     20, 22, 23, 
     ];
 
+    // y negatif = 1, positif = 0
+    // x negatif = 0, positif = 1
+    // z negatif = 0, positif = 1
+    const textureCoord = [
+      0, 1,
+      1, 1,
+      1, 0,
+      0, 0,
+      
+      0, 0,
+      0, 1,
+      1, 1,
+      1, 0,
 
-    return { vertices, colors, indices, normals };
+      0, 0,
+      0, 1,
+      1, 1,
+      1, 0,
+
+      0, 1,
+      1, 1,
+      1, 0,
+      0, 0,
+
+      1, 1,
+      1, 0,
+      0, 0,
+      0, 1,
+
+      0, 1,
+      1, 1,
+      1, 0,
+      0, 0,
+    ]
+
+    return { vertices, colors, indices, normals, textureCoord };
   }
