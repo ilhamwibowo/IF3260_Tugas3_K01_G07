@@ -135,6 +135,12 @@ function main() {
   const up = [0, 1, 0];
   var cameraAngleRadians = m4.degToRad(0);
 
+  // Set up camera properties for single canvas
+  var radius_single = 5;
+  const target_single = [0, 0, 0];
+  const up_single = [0, 1, 0];
+  var cameraAngleRadians_single = m4.degToRad(0);
+
   // Projection constants
   const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
   const fov = m4.degToRad(45); 
@@ -309,6 +315,8 @@ function main() {
     document.getElementById("sz_slider").value = 1;
     document.getElementById("cam_a_slider").value = 0;
     document.getElementById("cam_r_slider").value = 5;
+    document.getElementById("cam_a_o_slider").value = 0;
+    document.getElementById("cam_r_o_slider").value = 5;
     document.getElementById("mode_select").value = "perspective";
 
     // Reset camera variables
@@ -339,6 +347,19 @@ function main() {
   document.getElementById("cam_r_slider").oninput = function() {
     let value = document.getElementById("cam_r_slider").value;
     radius = value;
+    if (!rotate) drawScene();
+  };
+
+  // Event listener for camera angle and radius of selected object
+  document.getElementById("cam_a_o_slider").oninput = function() {
+    let value = m4.degToRad(document.getElementById("cam_a_o_slider").value);
+    cameraAngleRadians_single = value;
+    if (!rotate) drawScene();
+  };
+
+  document.getElementById("cam_r_o_slider").oninput = function() {
+    let value = document.getElementById("cam_r_o_slider").value;
+    radius_single = value;
     if (!rotate) drawScene();
   };
 
@@ -467,8 +488,8 @@ function main() {
 
     // Use matrix math to compute a position on a circle where
     // the camera is
-    var cameraMatrix = m4.yRotation(cameraAngleRadians);
-    cameraMatrix = m4.translate(cameraMatrix, 0, 0, radius);
+    var cameraMatrix = m4.yRotation(cameraAngleRadians_single);
+    cameraMatrix = m4.translate(cameraMatrix, 0, 0, radius_single);
 
     // Get the camera's position from the matrix we computed
     var cameraPosition = [
