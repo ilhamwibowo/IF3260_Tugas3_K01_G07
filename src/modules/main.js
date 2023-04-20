@@ -56,7 +56,7 @@ const vertexShaderSource = `
 
   void main() {
     gl_Position = u_projectionMatrix * u_modelViewMatrix * a_position;
-    vec3 pos = -(u_modelViewMatrix * a_position).xyz;
+    vec3 pos = (u_modelViewMatrix * a_position).xyz;
     v_pos = pos;
 
     v_N = normalize((u_modelViewMatrix * vec4(a_normal, 0.0)).xyz);
