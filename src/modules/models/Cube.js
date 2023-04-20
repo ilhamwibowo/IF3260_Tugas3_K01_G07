@@ -5,9 +5,10 @@ import { ArticulatedObject3D } from "../ArticulatedObject3D.js";
 
 function makeCube(gl, shader) {
 
-    var { vertices, colors, indices, normals, tangents, bitangents, textureCoord } = createCube();
-    
-    var body = new ArticulatedObject3D(gl, vertices, colors, indices, normals, tangents, bitangents, shader, textureCoord);
+    var { vertices, colors, indices, normals, tangents, bitangents, textureCoord, textureMode } = createCube();
+
+    var body = new ArticulatedObject3D(gl, vertices, colors, indices, normals, tangents, bitangents, shader, textureCoord, textureMode, "Articulated Model");
+    // var body = new ArticulatedObject3D(gl, vertices, colors, indices, normals, tangents, bitangents, shader, textureCoord, "Articulated Cube");
 
     return body;
 }

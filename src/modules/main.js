@@ -108,6 +108,9 @@ const fragmentShaderSource = `
   varying vec3 v_modelPosition;
   varying vec3 v_viewModelPosition;
 
+  // The position of camera.
+  uniform vec3 u_worldCameraPosition;
+
   void main() {
     // normalize the normal
     vec3 normal = normalize(v_normal);
@@ -127,7 +130,13 @@ const fragmentShaderSource = `
     // set the color to the texture
     if (u_textureMode == 0) {
       gl_FragColor = texture2D(u_texture_image, v_textureCoord);
-    } else if (u_textureMode == 2) {
+    } else if(u_textureMode == 1) {
+      // Reflection direction.
+      vec3 eyeToSurfaceDir = normalize(v_pos - u_worldCameraPosition);
+      vec3 reflectionDir = reflect(eyeToSurfaceDir, normal);
+
+      gl_FragColor = textureCube(u_texture_environment, reflectionDir);
+   } else if (u_textureMode == 2) {
       // Fragment position and lighting position.
       vec3 fragPos = v_tbn * v_viewModelPosition;
       vec3 lightPos = v_tbn * u_lightDirection;
@@ -167,7 +176,8 @@ function main() {
   // selectedObject is the object in the second canvas (components)
   // selectedCUbePart is part of cube, to apply transformations
   var cube = createHuman(gl, shader);
-  var selectedObject = createHuman(gl_single, shader_single);
+  var cube2 = createHuman(gl_single, shader_single);
+  var selectedObject = cube2;
   var selectedCubePart = cube;
   var vertices = cube.vertices;
   var colors = cube.colors;
@@ -311,6 +321,40 @@ function main() {
     );
   });
 
+  document.getElementById("loadButtonComponent").addEventListener("click", () => {
+    const fileInput = document.getElementById("fileInputComponent");
+    const file = fileInput.files[0];
+
+    if (!file) {
+      alert("No file selected!");
+      return;
+    }
+
+    loadFile(
+      file,
+      (fileContent) => {
+        const componentCube = new ArticulatedObject3D(gl, fileContent.vertices, fileContent.colors, fileContent.indices, fileContent.normals, fileContent.tangents, fileContent.bitangents, shader, fileContent.textureCoord, fileContent.textureMode, fileContent.name);
+        loadChildren(gl, shader, componentCube, fileContent.children);
+        
+        const componentSelected = new ArticulatedObject3D(gl_single, fileContent.vertices, fileContent.colors, fileContent.indices, fileContent.normals, fileContent.tangents, fileContent.bitangents, shader_single, fileContent.textureCoord, fileContent.textureMode, fileContent.name);
+        loadChildren(gl_single, shader_single, componentSelected, fileContent.children);
+
+        selectedCubePart.addChild(componentCube);
+        selectedObject.addChild(componentSelected);
+
+        resetInputs();
+        const buttonContainer = document.getElementById("button-container");
+        clearComponentTree();
+        createComponentTree(cube2, cube, buttonContainer);
+        drawScene();
+        console.log(cube);
+      },
+      (error) => {
+        console.error("Error reading file:", error);
+      }
+    );
+  });
+
   function rotateXYZ(valueX, valueY, valueZ) {
     if (valueX != 0) {
       selectedObject.rotateX(valueX);
@@ -324,7 +368,7 @@ function main() {
       selectedObject.rotateZ(valueZ);
       selectedCubePart.rotateZ(valueZ);
     }
-    console.log(rx_prev, ry_prev, rz_prev);
+    // console.log(rx_prev, ry_prev, rz_prev);
 
     if (!rotate) drawScene();
   }
@@ -724,7 +768,7 @@ function main() {
 
     // console.log(selectedObject);
 
-    selectedObject.draw(projectionMatrix, selectedObject.modelMatrix, modelViewMatrix, normalMatrix, viewLightDirection, enableShading);
+    selectedObject.draw(projectionMatrix, selectedObject.modelMatrix, modelViewMatrix, normalMatrix, viewLightDirection, enableShading, cameraPosition);
 
   }
 
@@ -799,7 +843,10 @@ function main() {
     const modelViewMatrix = m4.multiply(viewMatrix, cube.modelMatrix);
     const normalMatrix = m4.transpose(m4.inverse2(modelViewMatrix));
     
-    cube.draw(projectionMatrix, cube.modelMatrix, modelViewMatrix, normalMatrix, viewLightDirection, enableShading);
+    // Combined matrix
+    // const matrix = m4.multiply(projectionMatrix, modelViewMatrix);
+
+    cube.draw(projectionMatrix, cube.modelMatrix, modelViewMatrix, normalMatrix, viewLightDirection, enableShading, cameraPosition);
     drawSelectedObject();
     requestAnimationFrame(drawScene);
   }

@@ -21,6 +21,7 @@ export class Shader {
             modelViewMatrix:gl.getUniformLocation(this.program, "u_modelViewMatrix"),
             normalMatrix: gl.getUniformLocation(this.program, "u_normalMatrix"),
             lightDirection: gl.getUniformLocation(this.program, "u_lightDirection"),
+            cameraPosition: gl.getUniformLocation(this.program, "u_worldCameraPosition"),
             enableShading: gl.getUniformLocation(this.program, "u_enableShading"),
             textureMode: gl.getUniformLocation(this.program, "u_textureMode"),
             textureImage: gl.getUniformLocation(this.program, "u_texture_image"),
