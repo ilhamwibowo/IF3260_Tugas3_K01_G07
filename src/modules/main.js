@@ -108,6 +108,9 @@ const fragmentShaderSource = `
   varying vec3 v_modelPosition;
   varying vec3 v_viewModelPosition;
 
+  // The position of camera.
+  uniform vec3 u_worldCameraPosition;
+
   void main() {
     // normalize the normal
     vec3 normal = normalize(v_normal);
@@ -127,7 +130,13 @@ const fragmentShaderSource = `
     // set the color to the texture
     if (u_textureMode == 0) {
       gl_FragColor = texture2D(u_texture_image, v_textureCoord);
-    } else if (u_textureMode == 2) {
+    } else if(u_textureMode == 1) {
+      // Reflection direction.
+      vec3 eyeToSurfaceDir = normalize(v_pos - u_worldCameraPosition);
+      vec3 reflectionDir = reflect(eyeToSurfaceDir, normal);
+
+      gl_FragColor = textureCube(u_texture_environment, reflectionDir);
+   } else if (u_textureMode == 2) {
       // Fragment position and lighting position.
       vec3 fragPos = v_tbn * v_viewModelPosition;
       vec3 lightPos = v_tbn * u_lightDirection;
@@ -605,7 +614,7 @@ function main() {
 
     // console.log(selectedObject);
 
-    selectedObject.draw(projectionMatrix, selectedObject.modelMatrix, modelViewMatrix, normalMatrix, viewLightDirection, enableShading);
+    selectedObject.draw(projectionMatrix, selectedObject.modelMatrix, modelViewMatrix, normalMatrix, viewLightDirection, enableShading, cameraPosition);
 
   }
 
@@ -662,7 +671,7 @@ function main() {
     // Combined matrix
     // const matrix = m4.multiply(projectionMatrix, modelViewMatrix);
 
-    cube.draw(projectionMatrix, cube.modelMatrix, modelViewMatrix, normalMatrix, viewLightDirection, enableShading);
+    cube.draw(projectionMatrix, cube.modelMatrix, modelViewMatrix, normalMatrix, viewLightDirection, enableShading, cameraPosition);
     drawSelectedObject();
   }
 

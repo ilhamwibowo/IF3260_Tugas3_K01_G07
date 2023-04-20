@@ -145,7 +145,7 @@ class Object3D {
     return buffer;
   }
 
-  draw(projectionMatrix, modelMatrix, modelViewMatrix, normalMatrix, lightDirection, enableShading) {
+  draw(projectionMatrix, modelMatrix, modelViewMatrix, normalMatrix, lightDirection, enableShading, cameraPosition) {
     // Tell webgl to use our program .
     this.gl.useProgram(this.shaderProgram.program);
 
@@ -182,12 +182,13 @@ class Object3D {
     this.gl.uniformMatrix4fv(this.shaderProgram.uniformLocations.modelViewMatrix, false, modelViewMatrix);
     this.gl.uniformMatrix4fv(this.shaderProgram.uniformLocations.modelMatrix, false, modelMatrix);
     this.gl.uniform3fv(this.shaderProgram.uniformLocations.lightDirection, lightDirection);
+    this.gl.uniform3fv(this.shaderProgram.uniformLocations.cameraPosition, cameraPosition);
     this.gl.uniform1i(this.shaderProgram.uniformLocations.enableShading, enableShading);
+
+    console.log(cameraPosition);
 
     // Set the texture on or off.
     this.gl.uniform1i(this.shaderProgram.uniformLocations.textureMode, this.textureMode);
-
-    console.log(this.textureMode);
 
     // Texture image
     this.gl.uniform1i(this.shaderProgram.uniformLocations.textureImage, 0);
