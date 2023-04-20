@@ -25,6 +25,14 @@ class ArticulatedObject3D extends Object3D {
     objData.children = childrenData;
     return objData;
   }
+
+  changeTextureAll(mode) {
+    this.textureMode = mode;
+
+    for (const child of this.children) {
+      child.changeTextureAll(mode);
+    }
+  }
   
 
   draw(projectionMatrix, modelMatrix, modelViewMatrix, normalMatrix, lightDirection, enableShading) {

@@ -470,7 +470,19 @@ function main() {
   });
 
   document.getElementById("texture_s_select").addEventListener("change", function() {
-    texture_s = this.value;
+    let value;
+    if (this.value == "none") {
+      value = -1;
+    } else if (this.value == "image") {
+      value = 0;
+    } else if (this.value == "environment") {
+      value = 1;
+    } else if (this.value == "bump") {
+      value = 2;
+    }
+    selectedObject.changeTextureAll(value);
+    selectedCubePart.changeTextureAll(value);
+    if (!rotate) drawScene();
   });
 
 
