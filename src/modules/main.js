@@ -230,11 +230,12 @@ function main() {
     if(!rotate) drawScene();
   });
 
-  function loadChildren(gl, shader, cube, fileContentChildren) {
+  function loadChildren(webgl, shaderProgram, object, fileContentChildren) {
+    console.log(fileContentChildren.length);
     for (var i = 0; i < fileContentChildren.length; i++) {
-      var child = new ArticulatedObject3D(gl, fileContentChildren[i].vertices, fileContentChildren[i].colors, fileContentChildren[i].indices, fileContentChildren[i].normals, fileContentChildren[i].tangents, fileContentChildren[i].bitangents, shader, fileContentChildren[i].textureCoord, fileContentChildren[i].textureMode, fileContentChildren[i].name);
-      cube.addChild(child);
-      loadChildren(gl, shader, child, fileContentChildren[i].children);
+      var child = new ArticulatedObject3D(webgl, fileContentChildren[i].vertices, fileContentChildren[i].colors, fileContentChildren[i].indices, fileContentChildren[i].normals, fileContentChildren[i].tangents, fileContentChildren[i].bitangents, shaderProgram, fileContentChildren[i].textureCoord, fileContentChildren[i].textureMode, fileContentChildren[i].name);
+      object.addChild(child);
+      loadChildren(webgl, shaderProgram, child, fileContentChildren[i].children);
     }
   }
   
@@ -269,6 +270,9 @@ function main() {
         name = cube.name;
 
         resetInputs();
+        const buttonContainer = document.getElementById("button-container");
+        clearComponentTree();
+        createComponentTree(selectedObject, cube, buttonContainer);
         drawScene();
         console.log(cube);
       },
@@ -283,6 +287,7 @@ function main() {
     let value = document.getElementById("rx_slider").value;
     selectedObject.rotateX(value - rx_prev);
     selectedCubePart.rotateX(value - rx_prev);
+    console.log(selectedCubePart.rotation); 
     rx_prev = value;
     if (!rotate) drawScene();
   };
@@ -483,30 +488,6 @@ function main() {
     }
   }
 
-  // Event listener for auto rotate button
-  document.getElementById("rotate_btn").addEventListener("click", function() {
-    var interval = 0;
-    const animation = setInterval(function() {
-      interval++;
-      if (interval <= 15) {
-        selectedCubePart.rotateX(-0.05);
-      }
-      else if (interval <= 30 && interval > 15) {
-        selectedCubePart.rotateX(0.1);
-      }
-      else if (interval <= 45 && interval > 30) {
-        selectedCubePart.rotateX(-0.1);
-      }
-      else if (interval <= 60 && interval > 45) {
-        selectedCubePart.rotateX(0.05);
-      }
-      if (interval == 60) {
-        clearInterval(animation);
-      }
-      drawScene();
-    }, 20);
-  });
-
   // Event listener for texture
   // document.getElementById("mode_select").addEventListener("change", function() {
   //   projection_type = this.value;
@@ -560,6 +541,13 @@ function main() {
     return button;
   }
 
+  function clearComponentTree() {
+    const container = document.getElementById('button-container');
+    const buttons = container.querySelectorAll('button');
+    buttons.forEach(button => {
+      button.remove();
+    });
+  }
 
   function createComponentTree(object, baseObject,  container, depth = 0) {
     const button = createButton(object, baseObject, depth);
