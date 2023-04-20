@@ -185,7 +185,7 @@ class Object3D {
     this.gl.uniform3fv(this.shaderProgram.uniformLocations.cameraPosition, cameraPosition);
     this.gl.uniform1i(this.shaderProgram.uniformLocations.enableShading, enableShading);
 
-    console.log(cameraPosition);
+    // console.log(cameraPosition);
 
     // Set the texture on or off.
     this.gl.uniform1i(this.shaderProgram.uniformLocations.textureMode, this.textureMode);
