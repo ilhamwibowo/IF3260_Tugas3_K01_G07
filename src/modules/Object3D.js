@@ -26,33 +26,48 @@ class Object3D {
     this.textures = [imageTexture, environmentTexture, bumpTexture];
 
     // Model matrix representing object's transformations
+    this.translation = m4.identity();
+    this.scaling = m4.identity();
+    this.rotation = m4.identity();
     this.modelMatrix = m4.identity(); 
     this.initBuffers(vertices, colors, indices, normals, tangents, bitangents, textureCoord);
   }
 
   // Transformations
   translate(dx, dy, dz) {
-    this.modelMatrix = m4.translate(this.modelMatrix, dx, dy, dz);
+    this.translation = m4.translate(this.translation, dx, dy, dz);
+    this.updateModelMatrix();
   }
 
   rotateX(angle) {
-    this.modelMatrix = m4.xRotate(this.modelMatrix, angle);
+    this.rotation = m4.xRotate(this.rotation, angle);
+    this.updateModelMatrix();
   }
 
   rotateY(angle) {
-    this.modelMatrix = m4.yRotate(this.modelMatrix, angle);
+    this.rotation = m4.yRotate(this.rotation, angle);
+    this.updateModelMatrix();
   }
 
   rotateZ(angle) {
-    this.modelMatrix = m4.zRotate(this.modelMatrix, angle);
+    this.rotation = m4.zRotate(this.rotation, angle);
+    this.updateModelMatrix();
   }
 
   scale(sx, sy, sz) {
-    this.modelMatrix = m4.scale(this.modelMatrix, sx, sy, sz);
+    this.scaling = m4.scale(this.scaling, sx, sy, sz);
+    this.updateModelMatrix();
   }
 
   changeTexture(mode) {
     this.textureMode = mode;
+  }
+
+  updateModelMatrix() {
+    this.modelMatrix = m4.identity();
+    this.modelMatrix = m4.multiply(this.modelMatrix, this.translation);
+    this.modelMatrix = m4.multiply(this.modelMatrix, this.rotation);
+    this.modelMatrix = m4.multiply(this.modelMatrix, this.scaling);
   }
 
   // Save current buffers to be used later.
