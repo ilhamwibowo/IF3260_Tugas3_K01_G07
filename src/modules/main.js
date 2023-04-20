@@ -199,6 +199,7 @@ function main() {
   var numKeyframes = 0;
   var timeBetweenKeyframes = 100;
   var lastUpdate = Date.now();
+  var isChangingFrame = false;
   
   // Set up camera properties
   var radius = 5;
@@ -587,7 +588,6 @@ function main() {
       playAnimation = false;
       document.getElementById("play-button").innerHTML = "Play";
       lastUpdate = Date.now();
-      drawScene();
     }
     else {
       playAnimation = true;
@@ -605,7 +605,6 @@ function main() {
     else {
       playAnimation = true;
       document.getElementById("pause-button").innerHTML = "Resume";
-      drawScene();
     }
   });
 
@@ -614,28 +613,36 @@ function main() {
     if (!playAnimation) {
       currentKeyframe = 0;
       document.getElementById("current-frame").innerHTML = currentKeyframe;
-      drawScene();
+      isChangingFrame = true;
+      playAnimation = true;
+      requestAnimationFrame(drawScene);
     }
   });
   document.getElementById("prev-frame").addEventListener("click", function() {
     if (!playAnimation) {
       currentKeyframe = currentKeyframe - 1 < 0 ? 0 : currentKeyframe - 1;
       document.getElementById("current-frame").innerHTML = currentKeyframe;
-      drawScene();
+      isChangingFrame = true;
+      playAnimation = true;
+      requestAnimationFrame(drawScene);
     }
   });
   document.getElementById("next-frame").addEventListener("click", function() {
     if (!playAnimation) {
       currentKeyframe = currentKeyframe + 1 > numKeyframes - 1 ? numKeyframes - 1 : currentKeyframe + 1;
       document.getElementById("current-frame").innerHTML = currentKeyframe;
-      drawScene();
+      isChangingFrame = true;
+      playAnimation = true;
+      requestAnimationFrame(drawScene);
     }
   });
   document.getElementById("last-frame").addEventListener("click", function() {
     if (!playAnimation) {
       currentKeyframe = numKeyframes - 1;
       document.getElementById("current-frame").innerHTML = currentKeyframe;
-      drawScene();
+      isChangingFrame = true;
+      playAnimation = true;
+      requestAnimationFrame(drawScene);
     }
   });
 
@@ -800,7 +807,16 @@ function main() {
       sy_prev = keyframes[currentKeyframe].scale[1];
       sz_prev = keyframes[currentKeyframe].scale[2];
       
-      currentKeyframe = (currentKeyframe + 1) % numKeyframes;
+      if (playAnimation) {
+        // If we're playing the animation, we want to loop back to the first keyframe
+        currentKeyframe = (currentKeyframe + 1) % numKeyframes;
+      }
+      
+      if (isChangingFrame) {
+        console.log("Changing frame");
+        isChangingFrame = false;
+        playAnimation = false;
+      }
     }
 
     // Clear canvas and setup viewport.
