@@ -176,8 +176,19 @@ function main() {
   // selectedObject is the object in the second canvas (components)
   // selectedCUbePart is part of cube, to apply transformations
   var cube = createHuman(gl, shader);
-  var selectedObject = createHuman(gl_single, shader_single);
+  var cube2 = createHuman(gl_single, shader_single);
+  var selectedObject = cube2;
   var selectedCubePart = cube;
+  var vertices = cube.vertices;
+  var colors = cube.colors;
+  var indices = cube.indices;
+  var normals = cube.normals;
+  var tangents = cube.tangents;
+  var bitangents = cube.bitangents;
+  var textureCoord = cube.textureCoords;
+  var textureMode = cube.textureMode;
+  var children = cube.children;
+  var name = cube.name;
 
   let enableShading = false;
   
@@ -229,12 +240,12 @@ function main() {
     if(!rotate) drawScene();
   });
 
-  function loadChildren(gl, shader, cube, fileContentChildren) {
+  function loadChildren(webgl, shaderProgram, object, fileContentChildren) {
     console.log(fileContentChildren.length);
     for (var i = 0; i < fileContentChildren.length; i++) {
-      var child = new ArticulatedObject3D(gl, fileContentChildren[i].vertices, fileContentChildren[i].colors, fileContentChildren[i].indices, fileContentChildren[i].normals, fileContentChildren[i].tangents, fileContentChildren[i].bitangents, shader, fileContentChildren[i].textureCoord, fileContentChildren[i].textureMode, fileContentChildren[i].name);
-      cube.addChild(child);
-      loadChildren(gl, shader, child, fileContentChildren[i].children);
+      var child = new ArticulatedObject3D(webgl, fileContentChildren[i].vertices, fileContentChildren[i].colors, fileContentChildren[i].indices, fileContentChildren[i].normals, fileContentChildren[i].tangents, fileContentChildren[i].bitangents, shaderProgram, fileContentChildren[i].textureCoord, fileContentChildren[i].textureMode, fileContentChildren[i].name);
+      object.addChild(child);
+      loadChildren(webgl, shaderProgram, child, fileContentChildren[i].children);
     }
   }
   
@@ -257,8 +268,55 @@ function main() {
         selectedObject = new ArticulatedObject3D(gl_single, fileContent.vertices, fileContent.colors, fileContent.indices, fileContent.normals, fileContent.tangents, fileContent.bitangents, shader_single, fileContent.textureCoord, fileContent.textureMode, fileContent.name);
         loadChildren(gl_single, shader_single, selectedObject, fileContent.children);
         selectedCubePart = cube;
+        vertices = cube.vertices;
+        colors = cube.colors;
+        indices = cube.indices;
+        normals = cube.normals;
+        tangents = cube.tangents;
+        bitangents = cube.bitangents;
+        textureCoord = cube.textureCoords;
+        textureMode = cube.textureMode;
+        children = cube.children;
+        name = cube.name;
 
         resetInputs();
+        const buttonContainer = document.getElementById("button-container");
+        clearComponentTree();
+        createComponentTree(selectedObject, cube, buttonContainer);
+        drawScene();
+        console.log(cube);
+      },
+      (error) => {
+        console.error("Error reading file:", error);
+      }
+    );
+  });
+
+  document.getElementById("loadButtonComponent").addEventListener("click", () => {
+    const fileInput = document.getElementById("fileInputComponent");
+    const file = fileInput.files[0];
+
+    if (!file) {
+      alert("No file selected!");
+      return;
+    }
+
+    loadFile(
+      file,
+      (fileContent) => {
+        const componentCube = new ArticulatedObject3D(gl, fileContent.vertices, fileContent.colors, fileContent.indices, fileContent.normals, fileContent.tangents, fileContent.bitangents, shader, fileContent.textureCoord, fileContent.textureMode, fileContent.name);
+        loadChildren(gl, shader, componentCube, fileContent.children);
+        
+        const componentSelected = new ArticulatedObject3D(gl_single, fileContent.vertices, fileContent.colors, fileContent.indices, fileContent.normals, fileContent.tangents, fileContent.bitangents, shader_single, fileContent.textureCoord, fileContent.textureMode, fileContent.name);
+        loadChildren(gl_single, shader_single, componentSelected, fileContent.children);
+
+        selectedCubePart.addChild(componentCube);
+        selectedObject.addChild(componentSelected);
+
+        resetInputs();
+        const buttonContainer = document.getElementById("button-container");
+        clearComponentTree();
+        createComponentTree(cube2, cube, buttonContainer);
         drawScene();
         console.log(cube);
       },
@@ -273,6 +331,7 @@ function main() {
     let value = document.getElementById("rx_slider").value;
     selectedObject.rotateX(value - rx_prev);
     selectedCubePart.rotateX(value - rx_prev);
+    console.log(selectedCubePart.rotation); 
     rx_prev = value;
     if (!rotate) drawScene();
   };
@@ -388,15 +447,22 @@ function main() {
 
   // Event listener for set default
   document.getElementById("default_btn").addEventListener("click", function() {
-    cube = new ArticulatedObject3D(gl, cube.vertices, cube.colors, cube.indices, cube.normals, cube.tangents, cube.bitangents, shader, cube.textureCoord, cube.textureMode, cube.name);
-    loadChildren(cube, cube.children);
-    selectedObject = new ArticulatedObject3D(gl_single, selectedObject.vertices, selectedObject.colors, selectedObject.indices, selectedObject.normals, selectedObject.tangents, selectedObject.bitangents, shader_single, selectedObject.textureCoord, selectedObject.textureMode, selectedObject.name);
-    loadChildren(selectedObject, selectedObject.children);
-    selectedCubePart = cube;
+    cube.translation = m4.identity();
+    cube.scaling = m4.identity();
+    cube.rotation = m4.identity();
+    cube.modelMatrix = m4.identity();
+    selectedObject.translation = m4.identity();
+    selectedObject.scaling = m4.identity();
+    selectedObject.rotation = m4.identity();
+    selectedObject.modelMatrix = m4.identity();
+    selectedCubePart.translation = m4.identity();
+    selectedCubePart.scaling = m4.identity();
+    selectedCubePart.rotation = m4.identity();
+    selectedCubePart.modelMatrix = m4.identity();
 
     resetInputs();
     
-    if (!rotate) drawScene();
+    drawScene();
   });
 
   // Event listener for camera angle and radius
@@ -466,30 +532,6 @@ function main() {
     }
   }
 
-  // Event listener for auto rotate button
-  document.getElementById("rotate_btn").addEventListener("click", function() {
-    var interval = 0;
-    const animation = setInterval(function() {
-      interval++;
-      if (interval <= 15) {
-        selectedCubePart.rotateX(-0.05);
-      }
-      else if (interval <= 30 && interval > 15) {
-        selectedCubePart.rotateX(0.1);
-      }
-      else if (interval <= 45 && interval > 30) {
-        selectedCubePart.rotateX(-0.1);
-      }
-      else if (interval <= 60 && interval > 45) {
-        selectedCubePart.rotateX(0.05);
-      }
-      if (interval == 60) {
-        clearInterval(animation);
-      }
-      drawScene();
-    }, 20);
-  });
-
   // Event listener for texture
   // document.getElementById("mode_select").addEventListener("change", function() {
   //   projection_type = this.value;
@@ -543,6 +585,13 @@ function main() {
     return button;
   }
 
+  function clearComponentTree() {
+    const container = document.getElementById('button-container');
+    const buttons = container.querySelectorAll('button');
+    buttons.forEach(button => {
+      button.remove();
+    });
+  }
 
   function createComponentTree(object, baseObject,  container, depth = 0) {
     const button = createButton(object, baseObject, depth);
