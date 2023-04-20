@@ -3,7 +3,7 @@ import { createCube } from "./models/basicCube.js";
 import { m4 } from "./utils/mat4.js";
 import { Object3D } from "./Object3D.js";
 import { Shader } from "./shaders/shaderProgram.js";
-import { loadFile } from "./utils/loader.js";
+import { loadAnimation, loadFile } from "./utils/loader.js";
 import { createHuman } from "./models/Human.js";
 import { makeCube } from "./models/Cube.js";
 import { ArticulatedObject3D } from "./ArticulatedObject3D.js";
@@ -181,6 +181,12 @@ function main() {
   var name = cube.name;
 
   let enableShading = false;
+  var playAnimation = false;
+  var currentKeyframe = 0;
+  var keyframes = [];
+  var numKeyframes = 0;
+  var timeBetweenKeyframes = 100;
+  var lastUpdate = Date.now();
   
   // Set up camera properties
   var radius = 5;
@@ -274,7 +280,6 @@ function main() {
         clearComponentTree();
         createComponentTree(selectedObject, cube, buttonContainer);
         drawScene();
-        console.log(cube);
       },
       (error) => {
         console.error("Error reading file:", error);
@@ -282,86 +287,123 @@ function main() {
     );
   });
 
+  document.getElementById("load_anim").addEventListener("click", () => {
+    const fileInput = document.getElementById("animInput");
+    const file = fileInput.files[0];
+
+    if (!file) {
+      alert("No file selected!");
+      return;
+    }
+
+    loadAnimation(
+      file,
+      (fileContent) => {
+        keyframes = fileContent.keyframes;
+        numKeyframes = fileContent.numKeyframes;
+
+        drawScene();
+        console.log(keyframes);
+      },
+      (error) => {
+        console.error("Error reading file:", error);
+      }
+    );
+  });
+
+  function rotateXYZ(valueX, valueY, valueZ) {
+    if (valueX != 0) {
+      selectedObject.rotateX(valueX);
+      selectedCubePart.rotateX(valueX);
+    }
+    if (valueY != 0) {
+      selectedObject.rotateY(valueY);
+      selectedCubePart.rotateY(valueY);
+    }
+    if (valueZ != 0) {
+      selectedObject.rotateZ(valueZ);
+      selectedCubePart.rotateZ(valueZ);
+    }
+    console.log(rx_prev, ry_prev, rz_prev);
+
+    if (!rotate) drawScene();
+  }
+
   let rx_prev = 0;
   document.getElementById("rx_slider").oninput = function () {
     let value = document.getElementById("rx_slider").value;
-    selectedObject.rotateX(value - rx_prev);
-    selectedCubePart.rotateX(value - rx_prev);
-    console.log(selectedCubePart.rotation); 
+    rotateXYZ(value - rx_prev, 0, 0);
     rx_prev = value;
-    if (!rotate) drawScene();
   };
 
   let ry_prev = 0;
   document.getElementById("ry_slider").oninput = function () {
     let value = document.getElementById("ry_slider").value;
-    selectedObject.rotateY(value - ry_prev);
-    selectedCubePart.rotateY(value - ry_prev);
+    rotateXYZ(0, value - ry_prev, 0);
     ry_prev = value;
-    if (!rotate) drawScene();
   };
 
   let rz_prev = 0;
   document.getElementById("rz_slider").oninput = function () {
     let value = document.getElementById("rz_slider").value;
-    selectedObject.rotateZ(value - rz_prev);
-    selectedCubePart.rotateZ(value - rz_prev);
+    rotateXYZ(0, 0, value - rz_prev);
     rz_prev = value;
-    if (!rotate) drawScene();
   };
+
+  function translateXYZ(valueX, valueY, valueZ) {
+    selectedObject.translate(valueX, valueY, valueZ);
+    selectedCubePart.translate(valueX, valueY, valueZ);
+    // console.log(tx_prev, ty_prev, tz_prev);
+    if (!rotate) drawScene();
+  }
 
   let tx_prev = 0;
   document.getElementById("tx_slider").oninput = function () {
     let value = document.getElementById("tx_slider").value;
-    selectedObject.translate(value - tx_prev, 0, 0);
-    selectedCubePart.translate(value - tx_prev, 0, 0);
+    translateXYZ(value - tx_prev, 0, 0);
     tx_prev = value;
-    if (!rotate) drawScene();
   };
 
   let ty_prev = 0;
   document.getElementById("ty_slider").oninput = function () {
     let value = document.getElementById("ty_slider").value;
-    selectedObject.translate(0, value - ty_prev, 0);
-    selectedCubePart.translate(0, value - ty_prev, 0);
+    translateXYZ(0, value - ty_prev, 0);
     ty_prev = value;
-    if (!rotate) drawScene();
   };
 
   let tz_prev = 0;
   document.getElementById("tz_slider").oninput = function () {
     let value = document.getElementById("tz_slider").value;
-    selectedObject.translate(0, 0, value - tz_prev);
-    selectedCubePart.translate(0, 0, value - tz_prev);
+    translateXYZ(0, 0, value - tz_prev);
     tz_prev = value;
-    if (!rotate) drawScene();
   };
+
+  function scaleXYZ(valueX, valueY, valueZ) {
+    selectedObject.scale(valueX, valueY, valueZ);
+    selectedCubePart.scale(valueX, valueY, valueZ);
+    // console.log(sx_prev, sy_prev, sz_prev);
+    if (!rotate) drawScene();
+  }
 
   let sx_prev = 1;
   document.getElementById("sx_slider").oninput = function () {
     let value = document.getElementById("sx_slider").value;
-    selectedObject.scale(value / sx_prev, 1, 1);
-    selectedCubePart.scale(value / sx_prev, 1, 1);
+    scaleXYZ(value / sx_prev, 1, 1);
     sx_prev = value;
-    if (!rotate) drawScene();
   };
 
   let sy_prev = 1;
   document.getElementById("sy_slider").oninput = function () {
     let value = document.getElementById("sy_slider").value;
-    selectedObject.scale(1, value / sy_prev, 1);
-    selectedCubePart.scale(1, value / sy_prev, 1);
+    scaleXYZ(1, value / sy_prev, 1);
     sy_prev = value;
-    if (!rotate) drawScene();
   };
 
   let sz_prev = 1;
   document.getElementById("sz_slider").oninput = function () {
     let value = document.getElementById("sz_slider").value;
-    selectedObject.scale(1, 1, value / sz_prev);
-    selectedCubePart.scale(1, 1, value / sz_prev);
+    scaleXYZ(1, 1, value / sz_prev);
     sz_prev = value;
-    if (!rotate) drawScene();
   };
 
   // Rotate animation
@@ -457,7 +499,6 @@ function main() {
   document.getElementById("save_btn").addEventListener("click", function() {
     let obj = cube.saveObject(cube.modelMatrix);
 
-
     // file setting
     const text = JSON.stringify(obj);
     const val = document.getElementById("save_filename").value;
@@ -487,6 +528,69 @@ function main() {
       canvas.height = height;
     }
   }
+
+  // Event listener for play animation
+  document.getElementById("play-button").addEventListener("click", function() {
+    if (playAnimation) {
+      playAnimation = false;
+      document.getElementById("play-button").innerHTML = "Play";
+      lastUpdate = Date.now();
+      drawScene();
+    }
+    else {
+      playAnimation = true;
+      document.getElementById("play-button").innerHTML = "Stop";
+      currentKeyframe = 0;
+    }
+  });
+
+  // Event listener for pause animation
+  document.getElementById("pause-button").addEventListener("click", function() {
+    if (playAnimation) {
+      playAnimation = false;
+      document.getElementById("pause-button").innerHTML = "Pause";
+    }
+    else {
+      playAnimation = true;
+      document.getElementById("pause-button").innerHTML = "Resume";
+      drawScene();
+    }
+  });
+
+  // Event listener for animation keyframe
+  document.getElementById("first-frame").addEventListener("click", function() {
+    if (!playAnimation) {
+      currentKeyframe = 0;
+      document.getElementById("current-frame").innerHTML = currentKeyframe;
+      drawScene();
+    }
+  });
+  document.getElementById("prev-frame").addEventListener("click", function() {
+    if (!playAnimation) {
+      currentKeyframe = currentKeyframe - 1 < 0 ? 0 : currentKeyframe - 1;
+      document.getElementById("current-frame").innerHTML = currentKeyframe;
+      drawScene();
+    }
+  });
+  document.getElementById("next-frame").addEventListener("click", function() {
+    if (!playAnimation) {
+      currentKeyframe = currentKeyframe + 1 > numKeyframes - 1 ? numKeyframes - 1 : currentKeyframe + 1;
+      document.getElementById("current-frame").innerHTML = currentKeyframe;
+      drawScene();
+    }
+  });
+  document.getElementById("last-frame").addEventListener("click", function() {
+    if (!playAnimation) {
+      currentKeyframe = numKeyframes - 1;
+      document.getElementById("current-frame").innerHTML = currentKeyframe;
+      drawScene();
+    }
+  });
+
+  // Event listener for animation speed
+  document.getElementById("time_between_frames").addEventListener("change", function() {
+    timeBetweenKeyframes = this.value;
+  });
 
   // Event listener for texture
   // document.getElementById("mode_select").addEventListener("change", function() {
@@ -565,6 +669,7 @@ function main() {
   const buttonContainer = document.getElementById("button-container");
   createComponentTree(selectedObject, cube, buttonContainer);
 
+  requestAnimationFrame(drawScene);
 
   //////////////////////////////////////////// DRAW FUNCTIONS //////////////////////////////////
   // Draw in the second canvas
@@ -624,7 +729,28 @@ function main() {
   }
 
   // Draw in the main canvas
-  function drawScene() {
+  function drawScene(time) {
+    time *= 0.0005;
+
+    if (playAnimation && Date.now() - lastUpdate >= (1000 / timeBetweenKeyframes)) {
+      lastUpdate = Date.now();
+
+      translateXYZ(keyframes[currentKeyframe].translation[0] - tx_prev, keyframes[currentKeyframe].translation[1] - ty_prev, keyframes[currentKeyframe].translation[2] - tz_prev);
+      tx_prev = keyframes[currentKeyframe].translation[0];
+      ty_prev = keyframes[currentKeyframe].translation[1];
+      tz_prev = keyframes[currentKeyframe].translation[2];
+      rotateXYZ(keyframes[currentKeyframe].rotation[0] - rx_prev, keyframes[currentKeyframe].rotation[1] - ry_prev, keyframes[currentKeyframe].rotation[2] - rz_prev);
+      rx_prev = keyframes[currentKeyframe].rotation[0];
+      ry_prev = keyframes[currentKeyframe].rotation[1];
+      rz_prev = keyframes[currentKeyframe].rotation[2];
+      scaleXYZ(sx_prev / keyframes[currentKeyframe].scale[0], sy_prev / keyframes[currentKeyframe].scale[1], sz_prev / keyframes[currentKeyframe].scale[2]);
+      sx_prev = keyframes[currentKeyframe].scale[0];
+      sy_prev = keyframes[currentKeyframe].scale[1];
+      sz_prev = keyframes[currentKeyframe].scale[2];
+      
+      currentKeyframe = (currentKeyframe + 1) % numKeyframes;
+    }
+
     // Clear canvas and setup viewport.
     resizeCanvasToDisplaySize(gl.canvas);
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
@@ -673,11 +799,9 @@ function main() {
     const modelViewMatrix = m4.multiply(viewMatrix, cube.modelMatrix);
     const normalMatrix = m4.transpose(m4.inverse2(modelViewMatrix));
     
-    // Combined matrix
-    // const matrix = m4.multiply(projectionMatrix, modelViewMatrix);
-
     cube.draw(projectionMatrix, cube.modelMatrix, modelViewMatrix, normalMatrix, viewLightDirection, enableShading);
     drawSelectedObject();
+    requestAnimationFrame(drawScene);
   }
 
   drawScene();

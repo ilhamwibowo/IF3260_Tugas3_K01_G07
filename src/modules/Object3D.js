@@ -187,7 +187,7 @@ class Object3D {
     // Set the texture on or off.
     this.gl.uniform1i(this.shaderProgram.uniformLocations.textureMode, this.textureMode);
 
-    console.log(this.textureMode);
+    // console.log(this.textureMode);
 
     // Texture image
     this.gl.uniform1i(this.shaderProgram.uniformLocations.textureImage, 0);
