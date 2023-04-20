@@ -274,6 +274,7 @@ function main() {
         selectedObject = new ArticulatedObject3D(gl_single, fileContent.vertices, fileContent.colors, fileContent.indices, fileContent.normals, fileContent.tangents, fileContent.bitangents, shader_single, fileContent.textureCoord, fileContent.textureMode, fileContent.name);
         loadChildren(gl_single, shader_single, selectedObject, fileContent.children);
         selectedCubePart = cube;
+        cube2 = selectedObject;
         vertices = cube.vertices;
         colors = cube.colors;
         indices = cube.indices;
