@@ -13,16 +13,17 @@ class ArticulatedObject3D extends Object3D {
     this.children.push(child);
   }
 
-  saveObject() {
-    const objData = super.saveObject();
+  saveObject(modMatrix) {
+    const objData = super.saveObject(modMatrix);
+    objData.name = this.name;
     const childrenData = [];
   
     for (let i = 0; i < this.children.length; i++) {
-      childrenData.push(this.children[i].saveObject());
+      childrenData.push(this.children[i].saveObject(m4.multiply(modMatrix, this.children[i].modelMatrix)));
     }
   
-    console.log("alskdjflaskdfkjewbr");
     objData.children = childrenData;
+    console.log(objData)
     return objData;
   }
   

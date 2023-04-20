@@ -56,13 +56,13 @@ class Object3D {
   }
 
   // Save current buffers to be used later.
-  saveObject() {
+  saveObject(modMatrix) {
     // Apply modelMatrix to vertices.
     const vertices = this.vertices;
     const newVertices = [];
     for (let i = 0; i < vertices.length; i += 3) {
       const vertex = [vertices[i], vertices[i + 1], vertices[i + 2], 1];
-      const newVertex = m4.transformPoint(this.modelMatrix, vertex);
+      const newVertex = m4.transformPoint(modMatrix, vertex);
       newVertices.push(newVertex[0], newVertex[1], newVertex[2]);
     }
 
@@ -71,20 +71,40 @@ class Object3D {
     const newNormals = [];
     for (let i = 0; i < normals.length; i += 3) {
       const normal = [normals[i], normals[i + 1], normals[i + 2], 1];
-      const newNormal = m4.transformPoint(this.modelMatrix, normal);
+      const newNormal = m4.transformPoint(modMatrix, normal);
       newNormals.push(newNormal[0], newNormal[1], newNormal[2]);
+    }
+
+    // Apply modelMatrix to tangents.
+    const tangents = this.tangents;
+    const newTangents = [];
+    for (let i = 0; i < tangents.length; i += 3) {
+      const tangent = [tangents[i], tangents[i + 1], tangents[i + 2], 1];
+      const newTangent = m4.transformPoint(modMatrix, tangent);
+      newTangents.push(newTangent[0], newTangent[1], newTangent[2]);
+    }
+
+    // Apply modelMatrix to bitangents.
+    const bitangents = this.bitangents;
+    const newBitangents = [];
+    for (let i = 0; i < bitangents.length; i += 3) {
+      const bitangent = [bitangents[i], bitangents[i + 1], bitangents[i + 2], 1];
+      const newBitangent = m4.transformPoint(modMatrix, bitangent);
+      newBitangents.push(newBitangent[0], newBitangent[1], newBitangent[2]);
     }
 
     const colors = this.colors;
     const indices = this.indices;
-
-    console.log("newVertices", colors);
 
     return {
       vertices: newVertices,
       colors,
       indices,
       normals: newNormals,
+      tangents: newTangents,
+      bitangents: newBitangents,
+      textureCoord: this.textureCoord,
+      textureMode: this.textureMode,
     };
   }
 

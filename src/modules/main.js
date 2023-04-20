@@ -169,9 +169,6 @@ function main() {
   var cube = createHuman(gl, shader);
   var selectedObject = createHuman(gl_single, shader_single);
   var selectedCubePart = cube;
-  // var cube = makeCube(gl, shader);
-  // var selectedObject = makeCube(gl_single, shader_single);
-  // var selectedCubePart = cube;
 
   let enableShading = false;
   
@@ -222,8 +219,16 @@ function main() {
 
     if(!rotate) drawScene();
   });
-  
 
+  function loadChildren(gl, shader, cube, fileContentChildren) {
+    console.log(fileContentChildren.length);
+    for (var i = 0; i < fileContentChildren.length; i++) {
+      var child = new ArticulatedObject3D(gl, fileContentChildren[i].vertices, fileContentChildren[i].colors, fileContentChildren[i].indices, fileContentChildren[i].normals, fileContentChildren[i].tangents, fileContentChildren[i].bitangents, shader, fileContentChildren[i].textureCoord, fileContentChildren[i].textureMode, fileContentChildren[i].name);
+      cube.addChild(child);
+      loadChildren(gl, shader, child, fileContentChildren[i].children);
+    }
+  }
+  
   ////////////////////////////////// Event Listeners //////////////////////////////
   document.getElementById("loadButton").addEventListener("click", () => {
     const fileInput = document.getElementById("fileInput");
@@ -237,20 +242,19 @@ function main() {
     loadFile(
       file,
       (fileContent) => {
-        // vertices = fileContent.vertices;
-        // colors = fileContent.colors;
-        // indices = fileContent.indices;
-        // normals = fileContent.normals;
-
-        // console.log(fileContent);
-        cube = new Object3D(gl, fileContent.vertices, fileContent.colors, fileContent.indices, fileContent.normals, fileContent.tangents, fileContent.bitangents, shader, fileContent.textureCoord, 0);
-        // cube = new ArticulatedObject3D(gl, fileContent.vertices, fileContent.colors, fileContent.indices, fileContent.normals, shader);
+        cube = new ArticulatedObject3D(gl, fileContent.vertices, fileContent.colors, fileContent.indices, fileContent.normals, fileContent.tangents, fileContent.bitangents, shader, fileContent.textureCoord, fileContent.textureMode, fileContent.name);
+        console.log(fileContent.children);
+        loadChildren(gl, shader, cube, fileContent.children);
+        selectedObject = new ArticulatedObject3D(gl_single, fileContent.vertices, fileContent.colors, fileContent.indices, fileContent.normals, fileContent.tangents, fileContent.bitangents, shader_single, fileContent.textureCoord, fileContent.textureMode, fileContent.name);
+        loadChildren(gl_single, shader_single, selectedObject, fileContent.children);
+        selectedCubePart = cube;
 
         resetInputs();
         drawScene();
+        console.log(cube);
       },
       (error) => {
-          console.error("Error reading file:", error);
+        console.error("Error reading file:", error);
       }
     );
   });
@@ -375,7 +379,11 @@ function main() {
 
   // Event listener for set default
   document.getElementById("default_btn").addEventListener("click", function() {
-    cube = new Object3D(gl, vertices, colors, indices, normals, tangents, bitangents, shader, textureCoord, textureMode);
+    cube = new ArticulatedObject3D(gl, cube.vertices, cube.colors, cube.indices, cube.normals, cube.tangents, cube.bitangents, shader, cube.textureCoord, cube.textureMode, cube.name);
+    loadChildren(cube, cube.children);
+    selectedObject = new ArticulatedObject3D(gl_single, selectedObject.vertices, selectedObject.colors, selectedObject.indices, selectedObject.normals, selectedObject.tangents, selectedObject.bitangents, shader_single, selectedObject.textureCoord, selectedObject.textureMode, selectedObject.name);
+    loadChildren(selectedObject, selectedObject.children);
+    selectedCubePart = cube;
 
     resetInputs();
     
@@ -416,7 +424,8 @@ function main() {
 
   // Event listener for save object
   document.getElementById("save_btn").addEventListener("click", function() {
-    let obj = cube.saveObject();
+    let obj = cube.saveObject(cube.modelMatrix);
+
 
     // file setting
     const text = JSON.stringify(obj);
