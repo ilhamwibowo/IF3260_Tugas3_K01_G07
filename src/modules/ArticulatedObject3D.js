@@ -36,15 +36,15 @@ class ArticulatedObject3D extends Object3D {
   }
   
 
-  draw(projectionMatrix, modelMatrix, modelViewMatrix, normalMatrix, lightDirection, enableShading) {
-    super.draw(projectionMatrix, modelMatrix, modelViewMatrix, normalMatrix, lightDirection, enableShading);
+  draw(projectionMatrix, modelMatrix, modelViewMatrix, normalMatrix, lightDirection, enableShading, cameraPosition) {
+    super.draw(projectionMatrix, modelMatrix, modelViewMatrix, normalMatrix, lightDirection, enableShading, cameraPosition);
 
     // Draw all children 
     for (const child of this.children) {
       const childModelViewMatrix = m4.multiply(modelViewMatrix, child.modelMatrix);
       const childNormalMatrix = m4.transpose(m4.inverse2(childModelViewMatrix));
 
-      child.draw(projectionMatrix, modelMatrix, childModelViewMatrix, childNormalMatrix, lightDirection, enableShading);
+      child.draw(projectionMatrix, modelMatrix, childModelViewMatrix, childNormalMatrix, lightDirection, enableShading, cameraPosition);
     }
   }
 }

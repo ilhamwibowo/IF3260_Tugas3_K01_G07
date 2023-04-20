@@ -42,6 +42,10 @@ canvas {
 .text-lg {
     font-size: 1.125rem;
 }
+
+.text-md {
+    font-size: 0.75rem;
+}
   
 .font-bold {
     font-weight: 700;

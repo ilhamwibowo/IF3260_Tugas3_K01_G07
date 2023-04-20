@@ -3,7 +3,7 @@ import { createCube } from "./models/basicCube.js";
 import { m4 } from "./utils/mat4.js";
 import { Object3D } from "./Object3D.js";
 import { Shader } from "./shaders/shaderProgram.js";
-import { loadFile } from "./utils/loader.js";
+import { loadAnimation, loadFile } from "./utils/loader.js";
 import { createHuman } from "./models/Human.js";
 import { makeCube } from "./models/Cube.js";
 import { ArticulatedObject3D } from "./ArticulatedObject3D.js";
@@ -108,6 +108,9 @@ const fragmentShaderSource = `
   varying vec3 v_modelPosition;
   varying vec3 v_viewModelPosition;
 
+  // The position of camera.
+  uniform vec3 u_worldCameraPosition;
+
   void main() {
     // normalize the normal
     vec3 normal = normalize(v_normal);
@@ -127,7 +130,13 @@ const fragmentShaderSource = `
     // set the color to the texture
     if (u_textureMode == 0) {
       gl_FragColor = texture2D(u_texture_image, v_textureCoord);
-    } else if (u_textureMode == 2) {
+    } else if(u_textureMode == 1) {
+      // Reflection direction.
+      vec3 eyeToSurfaceDir = normalize(v_pos - u_worldCameraPosition);
+      vec3 reflectionDir = reflect(eyeToSurfaceDir, normal);
+
+      gl_FragColor = textureCube(u_texture_environment, reflectionDir);
+   } else if (u_textureMode == 2) {
       // Fragment position and lighting position.
       vec3 fragPos = v_tbn * v_viewModelPosition;
       vec3 lightPos = v_tbn * u_lightDirection;
@@ -167,10 +176,27 @@ function main() {
   // selectedObject is the object in the second canvas (components)
   // selectedCUbePart is part of cube, to apply transformations
   var cube = createHuman(gl, shader);
-  var selectedObject = createHuman(gl_single, shader_single);
+  var cube2 = createHuman(gl_single, shader_single);
+  var selectedObject = cube2;
   var selectedCubePart = cube;
+  var vertices = cube.vertices;
+  var colors = cube.colors;
+  var indices = cube.indices;
+  var normals = cube.normals;
+  var tangents = cube.tangents;
+  var bitangents = cube.bitangents;
+  var textureCoord = cube.textureCoords;
+  var textureMode = cube.textureMode;
+  var children = cube.children;
+  var name = cube.name;
 
   let enableShading = false;
+  var playAnimation = false;
+  var currentKeyframe = 0;
+  var keyframes = [];
+  var numKeyframes = 0;
+  var timeBetweenKeyframes = 100;
+  var lastUpdate = Date.now();
   
   // Set up camera properties
   var radius = 5;
@@ -248,11 +274,78 @@ function main() {
         selectedObject = new ArticulatedObject3D(gl_single, fileContent.vertices, fileContent.colors, fileContent.indices, fileContent.normals, fileContent.tangents, fileContent.bitangents, shader_single, fileContent.textureCoord, fileContent.textureMode, fileContent.name);
         loadChildren(gl_single, shader_single, selectedObject, fileContent.children);
         selectedCubePart = cube;
+        vertices = cube.vertices;
+        colors = cube.colors;
+        indices = cube.indices;
+        normals = cube.normals;
+        tangents = cube.tangents;
+        bitangents = cube.bitangents;
+        textureCoord = cube.textureCoords;
+        textureMode = cube.textureMode;
+        children = cube.children;
+        name = cube.name;
 
         resetInputs();
         const buttonContainer = document.getElementById("button-container");
         clearComponentTree();
         createComponentTree(selectedObject, cube, buttonContainer);
+        drawScene();
+      },
+      (error) => {
+        console.error("Error reading file:", error);
+      }
+    );
+  });
+
+  document.getElementById("load_anim").addEventListener("click", () => {
+    const fileInput = document.getElementById("animInput");
+    const file = fileInput.files[0];
+
+    if (!file) {
+      alert("No file selected!");
+      return;
+    }
+
+    loadAnimation(
+      file,
+      (fileContent) => {
+        keyframes = fileContent.keyframes;
+        numKeyframes = fileContent.numKeyframes;
+
+        drawScene();
+        console.log(keyframes);
+      },
+      (error) => {
+        console.error("Error reading file:", error);
+      }
+    );
+  });
+
+  document.getElementById("loadButtonComponent").addEventListener("click", () => {
+    const fileInput = document.getElementById("fileInputComponent");
+    const file = fileInput.files[0];
+
+    if (!file) {
+      alert("No file selected!");
+      return;
+    }
+
+    loadFile(
+      file,
+      (fileContent) => {
+        const componentCube = new ArticulatedObject3D(gl, fileContent.vertices, fileContent.colors, fileContent.indices, fileContent.normals, fileContent.tangents, fileContent.bitangents, shader, fileContent.textureCoord, fileContent.textureMode, fileContent.name);
+        loadChildren(gl, shader, componentCube, fileContent.children);
+        
+        const componentSelected = new ArticulatedObject3D(gl_single, fileContent.vertices, fileContent.colors, fileContent.indices, fileContent.normals, fileContent.tangents, fileContent.bitangents, shader_single, fileContent.textureCoord, fileContent.textureMode, fileContent.name);
+        loadChildren(gl_single, shader_single, componentSelected, fileContent.children);
+
+        selectedCubePart.addChild(componentCube);
+        selectedObject.addChild(componentSelected);
+
+        resetInputs();
+        const buttonContainer = document.getElementById("button-container");
+        clearComponentTree();
+        createComponentTree(cube2, cube, buttonContainer);
         drawScene();
         console.log(cube);
       },
@@ -262,86 +355,99 @@ function main() {
     );
   });
 
+  function rotateXYZ(valueX, valueY, valueZ) {
+    if (valueX != 0) {
+      selectedObject.rotateX(valueX);
+      selectedCubePart.rotateX(valueX);
+    }
+    if (valueY != 0) {
+      selectedObject.rotateY(valueY);
+      selectedCubePart.rotateY(valueY);
+    }
+    if (valueZ != 0) {
+      selectedObject.rotateZ(valueZ);
+      selectedCubePart.rotateZ(valueZ);
+    }
+    // console.log(rx_prev, ry_prev, rz_prev);
+
+    if (!rotate) drawScene();
+  }
+
   let rx_prev = 0;
   document.getElementById("rx_slider").oninput = function () {
     let value = document.getElementById("rx_slider").value;
-    selectedObject.rotateX(value - rx_prev);
-    selectedCubePart.rotateX(value - rx_prev);
-    console.log(selectedCubePart.rotation); 
+    rotateXYZ(value - rx_prev, 0, 0);
     rx_prev = value;
-    if (!rotate) drawScene();
   };
 
   let ry_prev = 0;
   document.getElementById("ry_slider").oninput = function () {
     let value = document.getElementById("ry_slider").value;
-    selectedObject.rotateY(value - ry_prev);
-    selectedCubePart.rotateY(value - ry_prev);
+    rotateXYZ(0, value - ry_prev, 0);
     ry_prev = value;
-    if (!rotate) drawScene();
   };
 
   let rz_prev = 0;
   document.getElementById("rz_slider").oninput = function () {
     let value = document.getElementById("rz_slider").value;
-    selectedObject.rotateZ(value - rz_prev);
-    selectedCubePart.rotateZ(value - rz_prev);
+    rotateXYZ(0, 0, value - rz_prev);
     rz_prev = value;
-    if (!rotate) drawScene();
   };
+
+  function translateXYZ(valueX, valueY, valueZ) {
+    selectedObject.translate(valueX, valueY, valueZ);
+    selectedCubePart.translate(valueX, valueY, valueZ);
+    // console.log(tx_prev, ty_prev, tz_prev);
+    if (!rotate) drawScene();
+  }
 
   let tx_prev = 0;
   document.getElementById("tx_slider").oninput = function () {
     let value = document.getElementById("tx_slider").value;
-    selectedObject.translate(value - tx_prev, 0, 0);
-    selectedCubePart.translate(value - tx_prev, 0, 0);
+    translateXYZ(value - tx_prev, 0, 0);
     tx_prev = value;
-    if (!rotate) drawScene();
   };
 
   let ty_prev = 0;
   document.getElementById("ty_slider").oninput = function () {
     let value = document.getElementById("ty_slider").value;
-    selectedObject.translate(0, value - ty_prev, 0);
-    selectedCubePart.translate(0, value - ty_prev, 0);
+    translateXYZ(0, value - ty_prev, 0);
     ty_prev = value;
-    if (!rotate) drawScene();
   };
 
   let tz_prev = 0;
   document.getElementById("tz_slider").oninput = function () {
     let value = document.getElementById("tz_slider").value;
-    selectedObject.translate(0, 0, value - tz_prev);
-    selectedCubePart.translate(0, 0, value - tz_prev);
+    translateXYZ(0, 0, value - tz_prev);
     tz_prev = value;
-    if (!rotate) drawScene();
   };
+
+  function scaleXYZ(valueX, valueY, valueZ) {
+    selectedObject.scale(valueX, valueY, valueZ);
+    selectedCubePart.scale(valueX, valueY, valueZ);
+    // console.log(sx_prev, sy_prev, sz_prev);
+    if (!rotate) drawScene();
+  }
 
   let sx_prev = 1;
   document.getElementById("sx_slider").oninput = function () {
     let value = document.getElementById("sx_slider").value;
-    selectedObject.scale(value / sx_prev, 1, 1);
-    selectedCubePart.scale(value / sx_prev, 1, 1);
+    scaleXYZ(value / sx_prev, 1, 1);
     sx_prev = value;
-    if (!rotate) drawScene();
   };
 
   let sy_prev = 1;
   document.getElementById("sy_slider").oninput = function () {
     let value = document.getElementById("sy_slider").value;
-    selectedObject.scale(1, value / sy_prev, 1);
-    selectedCubePart.scale(1, value / sy_prev, 1);
+    scaleXYZ(1, value / sy_prev, 1);
     sy_prev = value;
-    if (!rotate) drawScene();
   };
 
   let sz_prev = 1;
   document.getElementById("sz_slider").oninput = function () {
     let value = document.getElementById("sz_slider").value;
-    selectedObject.scale(1, 1, value / sz_prev);
-    selectedCubePart.scale(1, 1, value / sz_prev);
+    scaleXYZ(1, 1, value / sz_prev);
     sz_prev = value;
-    if (!rotate) drawScene();
   };
 
   // Rotate animation
@@ -383,15 +489,22 @@ function main() {
 
   // Event listener for set default
   document.getElementById("default_btn").addEventListener("click", function() {
-    cube = new ArticulatedObject3D(gl, cube.vertices, cube.colors, cube.indices, cube.normals, cube.tangents, cube.bitangents, shader, cube.textureCoord, cube.textureMode, cube.name);
-    loadChildren(cube, cube.children);
-    selectedObject = new ArticulatedObject3D(gl_single, selectedObject.vertices, selectedObject.colors, selectedObject.indices, selectedObject.normals, selectedObject.tangents, selectedObject.bitangents, shader_single, selectedObject.textureCoord, selectedObject.textureMode, selectedObject.name);
-    loadChildren(selectedObject, selectedObject.children);
-    selectedCubePart = cube;
+    cube.translation = m4.identity();
+    cube.scaling = m4.identity();
+    cube.rotation = m4.identity();
+    cube.modelMatrix = m4.identity();
+    selectedObject.translation = m4.identity();
+    selectedObject.scaling = m4.identity();
+    selectedObject.rotation = m4.identity();
+    selectedObject.modelMatrix = m4.identity();
+    selectedCubePart.translation = m4.identity();
+    selectedCubePart.scaling = m4.identity();
+    selectedCubePart.rotation = m4.identity();
+    selectedCubePart.modelMatrix = m4.identity();
 
     resetInputs();
     
-    if (!rotate) drawScene();
+    drawScene();
   });
 
   // Event listener for camera angle and radius
@@ -430,7 +543,6 @@ function main() {
   document.getElementById("save_btn").addEventListener("click", function() {
     let obj = cube.saveObject(cube.modelMatrix);
 
-
     // file setting
     const text = JSON.stringify(obj);
     const val = document.getElementById("save_filename").value;
@@ -460,6 +572,69 @@ function main() {
       canvas.height = height;
     }
   }
+
+  // Event listener for play animation
+  document.getElementById("play-button").addEventListener("click", function() {
+    if (playAnimation) {
+      playAnimation = false;
+      document.getElementById("play-button").innerHTML = "Play";
+      lastUpdate = Date.now();
+      drawScene();
+    }
+    else {
+      playAnimation = true;
+      document.getElementById("play-button").innerHTML = "Stop";
+      currentKeyframe = 0;
+    }
+  });
+
+  // Event listener for pause animation
+  document.getElementById("pause-button").addEventListener("click", function() {
+    if (playAnimation) {
+      playAnimation = false;
+      document.getElementById("pause-button").innerHTML = "Pause";
+    }
+    else {
+      playAnimation = true;
+      document.getElementById("pause-button").innerHTML = "Resume";
+      drawScene();
+    }
+  });
+
+  // Event listener for animation keyframe
+  document.getElementById("first-frame").addEventListener("click", function() {
+    if (!playAnimation) {
+      currentKeyframe = 0;
+      document.getElementById("current-frame").innerHTML = currentKeyframe;
+      drawScene();
+    }
+  });
+  document.getElementById("prev-frame").addEventListener("click", function() {
+    if (!playAnimation) {
+      currentKeyframe = currentKeyframe - 1 < 0 ? 0 : currentKeyframe - 1;
+      document.getElementById("current-frame").innerHTML = currentKeyframe;
+      drawScene();
+    }
+  });
+  document.getElementById("next-frame").addEventListener("click", function() {
+    if (!playAnimation) {
+      currentKeyframe = currentKeyframe + 1 > numKeyframes - 1 ? numKeyframes - 1 : currentKeyframe + 1;
+      document.getElementById("current-frame").innerHTML = currentKeyframe;
+      drawScene();
+    }
+  });
+  document.getElementById("last-frame").addEventListener("click", function() {
+    if (!playAnimation) {
+      currentKeyframe = numKeyframes - 1;
+      document.getElementById("current-frame").innerHTML = currentKeyframe;
+      drawScene();
+    }
+  });
+
+  // Event listener for animation speed
+  document.getElementById("time_between_frames").addEventListener("change", function() {
+    timeBetweenKeyframes = this.value;
+  });
 
   // Event listener for texture
   // document.getElementById("mode_select").addEventListener("change", function() {
@@ -538,6 +713,7 @@ function main() {
   const buttonContainer = document.getElementById("button-container");
   createComponentTree(selectedObject, cube, buttonContainer);
 
+  requestAnimationFrame(drawScene);
 
   //////////////////////////////////////////// DRAW FUNCTIONS //////////////////////////////////
   // Draw in the second canvas
@@ -592,12 +768,33 @@ function main() {
 
     // console.log(selectedObject);
 
-    selectedObject.draw(projectionMatrix, selectedObject.modelMatrix, modelViewMatrix, normalMatrix, viewLightDirection, enableShading);
+    selectedObject.draw(projectionMatrix, selectedObject.modelMatrix, modelViewMatrix, normalMatrix, viewLightDirection, enableShading, cameraPosition);
 
   }
 
   // Draw in the main canvas
-  function drawScene() {
+  function drawScene(time) {
+    time *= 0.0005;
+
+    if (playAnimation && Date.now() - lastUpdate >= (1000 / timeBetweenKeyframes)) {
+      lastUpdate = Date.now();
+
+      translateXYZ(keyframes[currentKeyframe].translation[0] - tx_prev, keyframes[currentKeyframe].translation[1] - ty_prev, keyframes[currentKeyframe].translation[2] - tz_prev);
+      tx_prev = keyframes[currentKeyframe].translation[0];
+      ty_prev = keyframes[currentKeyframe].translation[1];
+      tz_prev = keyframes[currentKeyframe].translation[2];
+      rotateXYZ(keyframes[currentKeyframe].rotation[0] - rx_prev, keyframes[currentKeyframe].rotation[1] - ry_prev, keyframes[currentKeyframe].rotation[2] - rz_prev);
+      rx_prev = keyframes[currentKeyframe].rotation[0];
+      ry_prev = keyframes[currentKeyframe].rotation[1];
+      rz_prev = keyframes[currentKeyframe].rotation[2];
+      scaleXYZ(sx_prev / keyframes[currentKeyframe].scale[0], sy_prev / keyframes[currentKeyframe].scale[1], sz_prev / keyframes[currentKeyframe].scale[2]);
+      sx_prev = keyframes[currentKeyframe].scale[0];
+      sy_prev = keyframes[currentKeyframe].scale[1];
+      sz_prev = keyframes[currentKeyframe].scale[2];
+      
+      currentKeyframe = (currentKeyframe + 1) % numKeyframes;
+    }
+
     // Clear canvas and setup viewport.
     resizeCanvasToDisplaySize(gl.canvas);
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
@@ -649,8 +846,9 @@ function main() {
     // Combined matrix
     // const matrix = m4.multiply(projectionMatrix, modelViewMatrix);
 
-    cube.draw(projectionMatrix, cube.modelMatrix, modelViewMatrix, normalMatrix, viewLightDirection, enableShading);
+    cube.draw(projectionMatrix, cube.modelMatrix, modelViewMatrix, normalMatrix, viewLightDirection, enableShading, cameraPosition);
     drawSelectedObject();
+    requestAnimationFrame(drawScene);
   }
 
   drawScene();
