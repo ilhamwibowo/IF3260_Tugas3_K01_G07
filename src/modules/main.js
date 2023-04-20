@@ -167,7 +167,8 @@ function main() {
   // selectedObject is the object in the second canvas (components)
   // selectedCUbePart is part of cube, to apply transformations
   var cube = createHuman(gl, shader);
-  var selectedObject = createHuman(gl_single, shader_single);
+  var cube2 = createHuman(gl_single, shader_single);
+  var selectedObject = cube2;
   var selectedCubePart = cube;
   var vertices = cube.vertices;
   var colors = cube.colors;
@@ -273,6 +274,40 @@ function main() {
         const buttonContainer = document.getElementById("button-container");
         clearComponentTree();
         createComponentTree(selectedObject, cube, buttonContainer);
+        drawScene();
+        console.log(cube);
+      },
+      (error) => {
+        console.error("Error reading file:", error);
+      }
+    );
+  });
+
+  document.getElementById("loadButtonComponent").addEventListener("click", () => {
+    const fileInput = document.getElementById("fileInputComponent");
+    const file = fileInput.files[0];
+
+    if (!file) {
+      alert("No file selected!");
+      return;
+    }
+
+    loadFile(
+      file,
+      (fileContent) => {
+        const componentCube = new ArticulatedObject3D(gl, fileContent.vertices, fileContent.colors, fileContent.indices, fileContent.normals, fileContent.tangents, fileContent.bitangents, shader, fileContent.textureCoord, fileContent.textureMode, fileContent.name);
+        loadChildren(gl, shader, componentCube, fileContent.children);
+        
+        const componentSelected = new ArticulatedObject3D(gl_single, fileContent.vertices, fileContent.colors, fileContent.indices, fileContent.normals, fileContent.tangents, fileContent.bitangents, shader_single, fileContent.textureCoord, fileContent.textureMode, fileContent.name);
+        loadChildren(gl_single, shader_single, componentSelected, fileContent.children);
+
+        selectedCubePart.addChild(componentCube);
+        selectedObject.addChild(componentSelected);
+
+        resetInputs();
+        const buttonContainer = document.getElementById("button-container");
+        clearComponentTree();
+        createComponentTree(cube2, cube, buttonContainer);
         drawScene();
         console.log(cube);
       },
