@@ -155,6 +155,7 @@ const fragmentShaderSource = `
 `;
 
 var projection_type = 'perspective';
+var subtree_projection_type = 'perspective';
 
 function main() {
   const canvas = document.querySelector('#canvas');
@@ -463,6 +464,11 @@ function main() {
     if (!rotate) drawScene();
   });
 
+  document.getElementById("subtree_mode_select").addEventListener("change", function() {
+    subtree_projection_type = this.value;
+    if (!rotate) drawScene();
+  });
+
   function resetInputs() {
     // Reset all sliders
     document.getElementById("rx_slider").value = 0;
@@ -729,13 +735,13 @@ function main() {
     var projectionMatrix = m4.identity();
 
     // Set up projection matrix
-    if (projection_type == "perspective") {
+    if (subtree_projection_type == "perspective") {
       projectionMatrix = m4.perspective(fov, aspect, near, far);
     }
-    else if (projection_type == "orthographic") {
+    else if (subtree_projection_type == "orthographic") {
       projectionMatrix = m4.orthographic(projectionMatrix, left, right, bottom, top, near, far);
     }
-    else if (projection_type == "oblique") {
+    else if (subtree_projection_type == "oblique") {
       var obliqueMatrix = m4.identity();
       var orthoMatrix = m4.identity();
 
