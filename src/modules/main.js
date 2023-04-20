@@ -176,8 +176,8 @@ function main() {
   // Cube is the main object
   // selectedObject is the object in the second canvas (components)
   // selectedCUbePart is part of cube, to apply transformations
-  var cube = createTurtle(gl, shader);
-  var cube2 = createTurtle(gl_single, shader_single);
+  var cube = createHuman(gl, shader);
+  var cube2 = createHuman(gl_single, shader_single);
   var selectedObject = cube2;
   var selectedCubePart = cube;
   var vertices = cube.vertices;
@@ -548,7 +548,7 @@ function main() {
     // file setting
     const text = JSON.stringify(obj);
     const val = document.getElementById("save_filename").value;
-    const name = val === "" ? "hollowobject.json" : val + ".json";
+    const name = val === "" ? "articulatedmodel.json" : val + ".json";
     const type = "text/plain";
 
     // create file
