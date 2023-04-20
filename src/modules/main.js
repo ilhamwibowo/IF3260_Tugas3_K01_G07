@@ -452,13 +452,24 @@ function main() {
   document.getElementById("rotate_btn").addEventListener("click", function() {
     var interval = 0;
     const animation = setInterval(function() {
-      if (interval >= 360) {
+      interval++;
+      if (interval <= 15) {
+        selectedCubePart.rotateX(-0.05);
+      }
+      else if (interval <= 30 && interval > 15) {
+        selectedCubePart.rotateX(0.1);
+      }
+      else if (interval <= 45 && interval > 30) {
+        selectedCubePart.rotateX(-0.1);
+      }
+      else if (interval <= 60 && interval > 45) {
+        selectedCubePart.rotateX(0.05);
+      }
+      if (interval == 60) {
         clearInterval(animation);
       }
-      cube.rotateY(1);
       drawScene();
-      interval++;
-    }, 10);
+    }, 20);
   });
 
   // Event listener for texture
