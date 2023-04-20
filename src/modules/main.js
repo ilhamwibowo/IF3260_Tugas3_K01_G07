@@ -457,30 +457,6 @@ function main() {
     }
   }
 
-  // Event listener for auto rotate button
-  document.getElementById("rotate_btn").addEventListener("click", function() {
-    var interval = 0;
-    const animation = setInterval(function() {
-      interval++;
-      if (interval <= 15) {
-        selectedCubePart.rotateX(-0.05);
-      }
-      else if (interval <= 30 && interval > 15) {
-        selectedCubePart.rotateX(0.1);
-      }
-      else if (interval <= 45 && interval > 30) {
-        selectedCubePart.rotateX(-0.1);
-      }
-      else if (interval <= 60 && interval > 45) {
-        selectedCubePart.rotateX(0.05);
-      }
-      if (interval == 60) {
-        clearInterval(animation);
-      }
-      drawScene();
-    }, 20);
-  });
-
   // Event listener for texture
   // document.getElementById("mode_select").addEventListener("change", function() {
   //   projection_type = this.value;
