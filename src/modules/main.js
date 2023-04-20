@@ -7,6 +7,7 @@ import { loadAnimation, loadFile } from "./utils/loader.js";
 import { createHuman } from "./models/Human.js";
 import { makeCube } from "./models/Cube.js";
 import { ArticulatedObject3D } from "./ArticulatedObject3D.js";
+import { createTurtle } from "./models/Turtle.js";
 
 /**
   TODOS : 
@@ -176,8 +177,8 @@ function main() {
   // Cube is the main object
   // selectedObject is the object in the second canvas (components)
   // selectedCUbePart is part of cube, to apply transformations
-  var cube = createHuman(gl, shader);
-  var cube2 = createHuman(gl_single, shader_single);
+  var cube = createTurtle(gl, shader);
+  var cube2 = createTurtle(gl_single, shader_single);
   var selectedObject = cube2;
   var selectedCubePart = cube;
   var vertices = cube.vertices;
