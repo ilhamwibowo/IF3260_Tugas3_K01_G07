@@ -26,43 +26,58 @@ class Object3D {
     this.textures = [imageTexture, environmentTexture, bumpTexture];
 
     // Model matrix representing object's transformations
+    this.translation = m4.identity();
+    this.scaling = m4.identity();
+    this.rotation = m4.identity();
     this.modelMatrix = m4.identity(); 
     this.initBuffers(vertices, colors, indices, normals, tangents, bitangents, textureCoord);
   }
 
   // Transformations
   translate(dx, dy, dz) {
-    this.modelMatrix = m4.translate(this.modelMatrix, dx, dy, dz);
+    this.translation = m4.translate(this.translation, dx, dy, dz);
+    this.updateModelMatrix();
   }
 
   rotateX(angle) {
-    this.modelMatrix = m4.xRotate(this.modelMatrix, angle);
+    this.rotation = m4.xRotate(this.rotation, angle);
+    this.updateModelMatrix();
   }
 
   rotateY(angle) {
-    this.modelMatrix = m4.yRotate(this.modelMatrix, angle);
+    this.rotation = m4.yRotate(this.rotation, angle);
+    this.updateModelMatrix();
   }
 
   rotateZ(angle) {
-    this.modelMatrix = m4.zRotate(this.modelMatrix, angle);
+    this.rotation = m4.zRotate(this.rotation, angle);
+    this.updateModelMatrix();
   }
 
   scale(sx, sy, sz) {
-    this.modelMatrix = m4.scale(this.modelMatrix, sx, sy, sz);
+    this.scaling = m4.scale(this.scaling, sx, sy, sz);
+    this.updateModelMatrix();
   }
 
   changeTexture(mode) {
     this.textureMode = mode;
   }
 
+  updateModelMatrix() {
+    this.modelMatrix = m4.identity();
+    this.modelMatrix = m4.multiply(this.modelMatrix, this.translation);
+    this.modelMatrix = m4.multiply(this.modelMatrix, this.rotation);
+    this.modelMatrix = m4.multiply(this.modelMatrix, this.scaling);
+  }
+
   // Save current buffers to be used later.
-  saveObject() {
+  saveObject(modMatrix) {
     // Apply modelMatrix to vertices.
     const vertices = this.vertices;
     const newVertices = [];
     for (let i = 0; i < vertices.length; i += 3) {
       const vertex = [vertices[i], vertices[i + 1], vertices[i + 2], 1];
-      const newVertex = m4.transformPoint(this.modelMatrix, vertex);
+      const newVertex = m4.transformPoint(modMatrix, vertex);
       newVertices.push(newVertex[0], newVertex[1], newVertex[2]);
     }
 
@@ -71,20 +86,40 @@ class Object3D {
     const newNormals = [];
     for (let i = 0; i < normals.length; i += 3) {
       const normal = [normals[i], normals[i + 1], normals[i + 2], 1];
-      const newNormal = m4.transformPoint(this.modelMatrix, normal);
+      const newNormal = m4.transformPoint(modMatrix, normal);
       newNormals.push(newNormal[0], newNormal[1], newNormal[2]);
+    }
+
+    // Apply modelMatrix to tangents.
+    const tangents = this.tangents;
+    const newTangents = [];
+    for (let i = 0; i < tangents.length; i += 3) {
+      const tangent = [tangents[i], tangents[i + 1], tangents[i + 2], 1];
+      const newTangent = m4.transformPoint(modMatrix, tangent);
+      newTangents.push(newTangent[0], newTangent[1], newTangent[2]);
+    }
+
+    // Apply modelMatrix to bitangents.
+    const bitangents = this.bitangents;
+    const newBitangents = [];
+    for (let i = 0; i < bitangents.length; i += 3) {
+      const bitangent = [bitangents[i], bitangents[i + 1], bitangents[i + 2], 1];
+      const newBitangent = m4.transformPoint(modMatrix, bitangent);
+      newBitangents.push(newBitangent[0], newBitangent[1], newBitangent[2]);
     }
 
     const colors = this.colors;
     const indices = this.indices;
-
-    console.log("newVertices", colors);
 
     return {
       vertices: newVertices,
       colors,
       indices,
       normals: newNormals,
+      tangents: newTangents,
+      bitangents: newBitangents,
+      textureCoord: this.textureCoord,
+      textureMode: this.textureMode,
     };
   }
 
