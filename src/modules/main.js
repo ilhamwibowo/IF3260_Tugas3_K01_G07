@@ -169,6 +169,16 @@ function main() {
   var cube = createHuman(gl, shader);
   var selectedObject = createHuman(gl_single, shader_single);
   var selectedCubePart = cube;
+  var vertices = cube.vertices;
+  var colors = cube.colors;
+  var indices = cube.indices;
+  var normals = cube.normals;
+  var tangents = cube.tangents;
+  var bitangents = cube.bitangents;
+  var textureCoord = cube.textureCoords;
+  var textureMode = cube.textureMode;
+  var children = cube.children;
+  var name = cube.name;
 
   let enableShading = false;
   
@@ -221,7 +231,6 @@ function main() {
   });
 
   function loadChildren(gl, shader, cube, fileContentChildren) {
-    console.log(fileContentChildren.length);
     for (var i = 0; i < fileContentChildren.length; i++) {
       var child = new ArticulatedObject3D(gl, fileContentChildren[i].vertices, fileContentChildren[i].colors, fileContentChildren[i].indices, fileContentChildren[i].normals, fileContentChildren[i].tangents, fileContentChildren[i].bitangents, shader, fileContentChildren[i].textureCoord, fileContentChildren[i].textureMode, fileContentChildren[i].name);
       cube.addChild(child);
@@ -248,6 +257,16 @@ function main() {
         selectedObject = new ArticulatedObject3D(gl_single, fileContent.vertices, fileContent.colors, fileContent.indices, fileContent.normals, fileContent.tangents, fileContent.bitangents, shader_single, fileContent.textureCoord, fileContent.textureMode, fileContent.name);
         loadChildren(gl_single, shader_single, selectedObject, fileContent.children);
         selectedCubePart = cube;
+        vertices = cube.vertices;
+        colors = cube.colors;
+        indices = cube.indices;
+        normals = cube.normals;
+        tangents = cube.tangents;
+        bitangents = cube.bitangents;
+        textureCoord = cube.textureCoords;
+        textureMode = cube.textureMode;
+        children = cube.children;
+        name = cube.name;
 
         resetInputs();
         drawScene();
@@ -379,15 +398,22 @@ function main() {
 
   // Event listener for set default
   document.getElementById("default_btn").addEventListener("click", function() {
-    cube = new ArticulatedObject3D(gl, cube.vertices, cube.colors, cube.indices, cube.normals, cube.tangents, cube.bitangents, shader, cube.textureCoord, cube.textureMode, cube.name);
-    loadChildren(cube, cube.children);
-    selectedObject = new ArticulatedObject3D(gl_single, selectedObject.vertices, selectedObject.colors, selectedObject.indices, selectedObject.normals, selectedObject.tangents, selectedObject.bitangents, shader_single, selectedObject.textureCoord, selectedObject.textureMode, selectedObject.name);
-    loadChildren(selectedObject, selectedObject.children);
-    selectedCubePart = cube;
+    cube.translation = m4.identity();
+    cube.scaling = m4.identity();
+    cube.rotation = m4.identity();
+    cube.modelMatrix = m4.identity();
+    selectedObject.translation = m4.identity();
+    selectedObject.scaling = m4.identity();
+    selectedObject.rotation = m4.identity();
+    selectedObject.modelMatrix = m4.identity();
+    selectedCubePart.translation = m4.identity();
+    selectedCubePart.scaling = m4.identity();
+    selectedCubePart.rotation = m4.identity();
+    selectedCubePart.modelMatrix = m4.identity();
 
     resetInputs();
     
-    if (!rotate) drawScene();
+    drawScene();
   });
 
   // Event listener for camera angle and radius
