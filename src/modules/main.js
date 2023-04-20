@@ -23,6 +23,8 @@ const vertexShaderSource = `
   attribute vec4 a_position;
   attribute vec4 a_color;
   attribute vec3 a_normal;
+  attribute vec3 a_tangent;
+  attribute vec3 a_bitangent;
   attribute vec2 a_textureCoord;
 
   varying vec4 v_color;
@@ -31,9 +33,26 @@ const vertexShaderSource = `
   varying vec3 v_N;
   varying vec2 v_textureCoord;
 
+  varying vec3 v_modelPosition;
+  varying vec3 v_viewModelPosition;
+
+  uniform mat4 u_modelMatrix;
   uniform mat4 u_modelViewMatrix;
   uniform mat4 u_projectionMatrix;
   uniform mat4 u_normalMatrix;
+
+  // All variables for Bump Mapping
+  varying mat3 v_tbn;
+
+  mat3 transpose(in mat3 inMatrix) {
+    vec3 i0 = inMatrix[0];
+    vec3 i1 = inMatrix[1];
+    vec3 i2 = inMatrix[2];
+  
+    mat3 outMatrix = mat3(vec3(i0.x, i1.x, i2.x), vec3(i0.y, i1.y, i2.y), vec3(i0.z, i1.z, i2.z));
+  
+    return outMatrix;
+  }
 
   void main() {
     gl_Position = u_projectionMatrix * u_modelViewMatrix * a_position;
@@ -46,7 +65,16 @@ const vertexShaderSource = `
 
     // Pass the texcoord to the fragment shader.
     v_textureCoord = a_textureCoord;
+
+    // send the view position to the fragment shader
+    v_modelPosition = vec3(u_modelMatrix * a_position);
+    v_viewModelPosition = vec3(u_modelViewMatrix * a_position);
   
+    // Bump mapping variables. 
+    vec3 t = normalize(mat3(u_normalMatrix) * a_tangent);
+    vec3 b = normalize(mat3(u_normalMatrix) * a_bitangent);
+    vec3 n = normalize(mat3(u_normalMatrix) * a_normal);
+    v_tbn = transpose(mat3(t, b, n));
   }
 `
 const fragmentShaderSource = `
@@ -76,6 +104,10 @@ const fragmentShaderSource = `
   uniform int u_textureMode;
   varying vec2 v_textureCoord;
 
+  // The position of object.
+  varying vec3 v_modelPosition;
+  varying vec3 v_viewModelPosition;
+
   void main() {
     // normalize the normal
     vec3 normal = normalize(v_normal);
@@ -95,7 +127,21 @@ const fragmentShaderSource = `
     // set the color to the texture
     if (u_textureMode == 0) {
       gl_FragColor = texture2D(u_texture_image, v_textureCoord);
-    } 
+    } else if (u_textureMode == 2) {
+      // Fragment position and lighting position.
+      vec3 fragPos = v_tbn * v_viewModelPosition;
+      vec3 lightPos = v_tbn * u_lightDirection;
+
+      // Lighting direction and ambient.
+      vec3 lightDir = normalize(lightPos - fragPos);
+      vec3 albedo = texture2D(u_texture_bump, v_textureCoord).rgb;
+      vec3 ambient = 0.3 * albedo;
+      // Lighting diffuse.
+      vec3 norm = normalize(texture2D(u_texture_bump, v_textureCoord).rgb * 2.0 - 1.0);
+      float diffuse = max(dot(lightDir, norm), 0.0);
+
+      gl_FragColor = vec4(diffuse * albedo + ambient, 1.0);
+    }
   }
 `;
 
@@ -155,7 +201,7 @@ function main() {
   var rotate = false;
 
   // Texture Mode
-  var textureMode;
+  var textureMode = -1;
 
   // This is for testing purposes. Will be changed in future development
   const cameraSpeed = m4.degToRad(1);
@@ -191,7 +237,7 @@ function main() {
         // normals = fileContent.normals;
 
         // console.log(fileContent);
-        cube = new Object3D(gl, fileContent.vertices, fileContent.colors, fileContent.indices, fileContent.normals, shader, fileContent.textureCoord, 0);
+        cube = new Object3D(gl, fileContent.vertices, fileContent.colors, fileContent.indices, fileContent.normals, fileContent.tangents, fileContent.bitangents, shader, fileContent.textureCoord, 0);
         // cube = new ArticulatedObject3D(gl, fileContent.vertices, fileContent.colors, fileContent.indices, fileContent.normals, shader);
 
         resetInputs();
@@ -321,7 +367,7 @@ function main() {
 
   // Event listener for set default
   document.getElementById("default_btn").addEventListener("click", function() {
-    cube = new Object3D(gl, vertices, colors, indices, normals, shader, textureCoord, textureMode);
+    cube = new Object3D(gl, vertices, colors, indices, normals, tangents, bitangents, shader, textureCoord, textureMode);
 
     resetInputs();
     
@@ -396,6 +442,9 @@ function main() {
     } else if (this.value == "bump") {
       this.textureMode = 2;
     }
+    console.log(this.value);
+    console.log(this.textureMode);
+    if (!rotate) drawScene();
   });
 
   document.getElementById("texture_s_select").addEventListener("change", function() {
@@ -488,7 +537,8 @@ function main() {
     const normalMatrix = m4.transpose(m4.inverse2(modelViewMatrix));
 
     // console.log(selectedObject);
-    selectedObject.draw(projectionMatrix, modelViewMatrix, normalMatrix, viewLightDirection, enableShading);
+
+    selectedObject.draw(projectionMatrix, selectedObject.modelMatrix, modelViewMatrix, normalMatrix, viewLightDirection, enableShading, textureMode);
 
   }
 
@@ -544,10 +594,9 @@ function main() {
     
     // Combined matrix
     // const matrix = m4.multiply(projectionMatrix, modelViewMatrix);
-    
-    cube.draw(projectionMatrix, modelViewMatrix, normalMatrix, viewLightDirection, enableShading, textureMode);
-    drawSelectedObject();
 
+    cube.draw(projectionMatrix, cube.modelMatrix, modelViewMatrix, normalMatrix, viewLightDirection, enableShading, textureMode);
+    drawSelectedObject();
   }
 
   drawScene();

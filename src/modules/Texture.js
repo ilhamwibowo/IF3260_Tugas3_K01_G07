@@ -43,7 +43,7 @@ export class TEXTURE_MAP {
             },
             {
                 target: gl.TEXTURE_CUBE_MAP_POSITIVE_Y,
-                url: '../assets/pos-y.jpg',
+                url: './assets/pos-y.jpg',
             },
             {
                 target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Y,
@@ -92,8 +92,14 @@ export class TEXTURE_MAP {
     static image(gl) {
         const url = "./assets/sun.jpg";
 
-        return TEXTURE_MAP.loadTexture2D(gl, url)
+        return TEXTURE_MAP.loadTexture2D(gl, url);
     }
+
+    static bump(gl) {
+        const url = "./assets/bump.png";
+        return TEXTURE_MAP.loadTexture2D(gl, url);
+    }
+
     static loadTexture2D(gl, url) {
         // create a texture.
         var texture = gl.createTexture();

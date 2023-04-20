@@ -10,11 +10,14 @@ export class Shader {
             position: gl.getAttribLocation(this.program, "a_position"),
             color: gl.getAttribLocation(this.program, "a_color"),
             normal: gl.getAttribLocation(this.program, "a_normal"),
+            tangent: gl.getAttribLocation(this.program, "a_tangent"),
+            bitangent: gl.getAttribLocation(this.program, "a_bitangent"),
             textureCoord: gl.getAttribLocation(this.program, "a_textureCoord"),
         };
 
         this.uniformLocations = {
             projectionMatrix:gl.getUniformLocation(this.program, "u_projectionMatrix"),
+            modelMatrix:gl.getUniformLocation(this.program, "u_modelMatrix"),
             modelViewMatrix:gl.getUniformLocation(this.program, "u_modelViewMatrix"),
             normalMatrix: gl.getUniformLocation(this.program, "u_normalMatrix"),
             lightDirection: gl.getUniformLocation(this.program, "u_lightDirection"),

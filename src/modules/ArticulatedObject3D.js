@@ -3,8 +3,8 @@ import { Object3D } from "./Object3D.js";
 import { m4 } from "./utils/mat4.js";
 
 class ArticulatedObject3D extends Object3D {
-  constructor(gl, vertices, colors, indices, normals, shaderProgram, textureCoord, name) {
-    super(gl, vertices, colors, indices, normals, shaderProgram, textureCoord, 0);
+  constructor(gl, vertices, colors, indices, normals, tangents, bitangents, shaderProgram, textureCoord, name) {
+    super(gl, vertices, colors, indices, normals, tangents, bitangents, shaderProgram, textureCoord, 0);
     this.children = [];
     this.name = name;
   }
@@ -27,15 +27,15 @@ class ArticulatedObject3D extends Object3D {
   }
   
 
-  draw(projectionMatrix, modelViewMatrix, normalMatrix, lightDirection, enableShading) {
-    super.draw(projectionMatrix, modelViewMatrix, normalMatrix, lightDirection, enableShading);
+  draw(projectionMatrix, modelMatrix, modelViewMatrix, normalMatrix, lightDirection, enableShading, textureMode) {
+    super.draw(projectionMatrix, modelMatrix, modelViewMatrix, normalMatrix, lightDirection, enableShading, textureMode);
 
     // Draw all children 
     for (const child of this.children) {
       const childModelViewMatrix = m4.multiply(modelViewMatrix, child.modelMatrix);
       const childNormalMatrix = m4.transpose(m4.inverse2(childModelViewMatrix));
 
-      child.draw(projectionMatrix, childModelViewMatrix, childNormalMatrix, lightDirection, enableShading);
+      child.draw(projectionMatrix, modelMatrix, childModelViewMatrix, childNormalMatrix, lightDirection, enableShading, textureMode);
     }
   }
 }

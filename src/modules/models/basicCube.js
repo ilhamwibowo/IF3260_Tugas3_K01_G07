@@ -76,6 +76,49 @@ export function createCube() {
       normals = normals.concat(n, n, n, n);
     }
 
+    const faceTangents = [
+      // Front face
+      [0, -1, 0],
+      // Back face
+      [0, -1, 0],
+      // Top face
+      [0, -1, 0],
+      // Bottom face
+      [0, -1, 0],
+      // Right face
+      [-1, 0, 0],
+      // Left face
+      [1, 0, 0],
+    ];
+
+    let tangents = [];
+    for (let j = 0; j < faceTangents.length; j++) {
+      const n = faceTangents[j];
+      tangents = tangents.concat(n, n, n, n);
+    }
+
+    const bi = 0.7071067811865475;
+    const faceBitangents = [
+      // Front face
+      [bi, -bi, 0],
+      // Back face
+      [-bi, -bi, 0],
+      // Top face
+      [0, -bi, -bi],
+      // Bottom face
+      [0, -bi, bi],
+      // Right face
+      [-bi, 0, bi],
+      // Left face
+      [bi, 0, bi],
+    ];
+
+    let bitangents = [];
+    for (let j = 0; j < faceBitangents.length; j++) {
+      const n = faceBitangents[j];
+      bitangents = bitangents.concat(n, n, n, n);
+    }
+
     const indices = [
       0,  1,  2,      0,  2,  3, 
       4,  5,  6,      4,  6,  7, 
@@ -120,5 +163,5 @@ export function createCube() {
       0, 0,
     ]
 
-    return { vertices, colors, indices, normals, textureCoord };
+    return { vertices, colors, indices, normals, tangents, bitangents, textureCoord };
   }

@@ -7,23 +7,27 @@ import { TEXTURE_MAP, toTextureMode } from "./Texture.js";
 **/
 
 class Object3D {
-  constructor(gl, vertices, colors, indices, normals, shaderProgram, textureCoord, textureMode) {
+  constructor(gl, vertices, colors, indices, normals, tangents, bitangents, shaderProgram, textureCoord, textureMode) {
     this.gl = gl;
     this.indices = indices;
     this.shaderProgram = shaderProgram;
     this.vertices = vertices;
     this.colors = colors;
     this.normals = normals;
+    this.tangents = tangents;
+    this.bitangents = bitangents
     this.textureCoord = textureCoord;
     this.textureMode = textureMode;
     this.savedBuffers = null;
 
     let imageTexture = TEXTURE_MAP.image(this.gl);
-    this.textures = [imageTexture];
+    let environmentTexture = TEXTURE_MAP.environment(this.gl);
+    let bumpTexture = TEXTURE_MAP.bump(this.gl);
+    this.textures = [imageTexture, environmentTexture, bumpTexture];
 
     // Model matrix representing object's transformations
     this.modelMatrix = m4.identity(); 
-    this.initBuffers(vertices, colors, indices, normals, textureCoord);
+    this.initBuffers(vertices, colors, indices, normals, tangents, bitangents, textureCoord);
   }
 
   // Transformations
@@ -82,12 +86,14 @@ class Object3D {
 
   
   // Initialize necessary buffers for object.
-  initBuffers(vertices, colors, indices, normals, textureCoord) {
+  initBuffers(vertices, colors, indices, normals, tangents, bitangents, textureCoord) {
     this.buffers = {
       position: this.createAndSetupBuffer(new Float32Array(vertices), this.gl.ARRAY_BUFFER),
       color: this.createAndSetupBuffer(new Float32Array(colors), this.gl.ARRAY_BUFFER),
       index: this.createAndSetupBuffer(new Uint16Array(indices), this.gl.ELEMENT_ARRAY_BUFFER),
       normal: this.createAndSetupBuffer(new Float32Array(normals), this.gl.ARRAY_BUFFER),
+      tangent: this.createAndSetupBuffer(new Float32Array(tangents), this.gl.ARRAY_BUFFER),
+      bitangent: this.createAndSetupBuffer(new Float32Array(bitangents), this.gl.ARRAY_BUFFER),
       textureCoord: this.createAndSetupBuffer(new Float32Array(textureCoord), this.gl.ARRAY_BUFFER),
     };
   }
@@ -100,7 +106,7 @@ class Object3D {
     return buffer;
   }
 
-  draw(projectionMatrix, modelViewMatrix, normalMatrix, lightDirection, enableShading, textureMode) {
+  draw(projectionMatrix, modelMatrix, modelViewMatrix, normalMatrix, lightDirection, enableShading, textureMode) {
     // Tell webgl to use our program .
     this.gl.useProgram(this.shaderProgram.program);
 
@@ -116,7 +122,15 @@ class Object3D {
     this.gl.enableVertexAttribArray(this.shaderProgram.attributeLocations.normal);
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers.normal);
     this.gl.vertexAttribPointer(this.shaderProgram.attributeLocations.normal, 3, this.gl.FLOAT, false, 0, 0);
+    
+    this.gl.enableVertexAttribArray(this.shaderProgram.attributeLocations.tangent);
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers.tangent);
+    this.gl.vertexAttribPointer(this.shaderProgram.attributeLocations.tangent, 3, this.gl.FLOAT, false, 0, 0);
 
+    this.gl.enableVertexAttribArray(this.shaderProgram.attributeLocations.bitangent);
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers.bitangent);
+    this.gl.vertexAttribPointer(this.shaderProgram.attributeLocations.bitangent, 3, this.gl.FLOAT, false, 0, 0);
+    
     this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.buffers.index);
 
     this.gl.enableVertexAttribArray(this.shaderProgram.attributeLocations.textureCoord);
@@ -127,24 +141,25 @@ class Object3D {
     this.gl.uniformMatrix4fv(this.shaderProgram.uniformLocations.normalMatrix, false, normalMatrix);
     this.gl.uniformMatrix4fv(this.shaderProgram.uniformLocations.projectionMatrix, false, projectionMatrix);
     this.gl.uniformMatrix4fv(this.shaderProgram.uniformLocations.modelViewMatrix, false, modelViewMatrix);
+    this.gl.uniformMatrix4fv(this.shaderProgram.uniformLocations.modelMatrix, false, modelMatrix);
     this.gl.uniform3fv(this.shaderProgram.uniformLocations.lightDirection, lightDirection);
     this.gl.uniform1i(this.shaderProgram.uniformLocations.enableShading, enableShading);
 
     // Set the texture on or off.
-    this.gl.uniform1i(this.shaderProgram.uniformLocations.textureMode, 0);
+    this.gl.uniform1i(this.shaderProgram.uniformLocations.textureMode, textureMode);
 
     // Texture image
     this.gl.uniform1i(this.shaderProgram.uniformLocations.textureImage, 0);
     this.gl.activeTexture(this.gl.TEXTURE0);
     this.gl.bindTexture(this.gl.TEXTURE_2D, this.textures[0])
     // Texture environment.
-    // this.gl.uniform1i(this.shaderProgram.uniformLocations.textureEnvironment, 1);
-    // this.gl.activeTexture(this.gl.TEXTURE1);
-    // this.gl.bindTexture(this.gl.TEXTURE_CUBE_MAP, this.textures[1]);
+    this.gl.uniform1i(this.shaderProgram.uniformLocations.textureEnvironment, 1);
+    this.gl.activeTexture(this.gl.TEXTURE1);
+    this.gl.bindTexture(this.gl.TEXTURE_CUBE_MAP, this.textures[1]);
     // Texture bump.
-    // this.gl.uniform1i(this.shaderProgram.uniformLocations.textureBump, 2);
-    // this.gl.activeTexture(this.gl.TEXTURE2);
-    // this.gl.bindTexture(this.gl.TEXTURE_2D, this.textures[2]);
+    this.gl.uniform1i(this.shaderProgram.uniformLocations.textureBump, 2);
+    this.gl.activeTexture(this.gl.TEXTURE2);
+    this.gl.bindTexture(this.gl.TEXTURE_2D, this.textures[2]);
 
     // Drawwzzz.
     this.gl.drawElements(this.gl.TRIANGLES, this.indices.length, this.gl.UNSIGNED_SHORT, 0);
