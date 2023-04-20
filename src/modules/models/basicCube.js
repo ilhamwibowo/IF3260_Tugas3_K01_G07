@@ -163,5 +163,7 @@ export function createCube() {
       0, 0,
     ]
 
-    return { vertices, colors, indices, normals, tangents, bitangents, textureCoord };
+    const textureMode = -1
+  
+    return { vertices, colors, indices, normals, tangents, bitangents, textureCoord, textureMode };
   }

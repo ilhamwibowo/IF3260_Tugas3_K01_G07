@@ -454,17 +454,18 @@ function main() {
   //   if (!rotate) drawScene();
   // });
   document.getElementById("texture_select").addEventListener("change", function() {
+    let value;
     if (this.value == "none") {
-      this.textureMode = -1;
+      value = -1;
     } else if (this.value == "image") {
-      this.textureMode = 0;
+      value = 0;
     } else if (this.value == "environment") {
-      this.textureMode = 1;
+      value = 1;
     } else if (this.value == "bump") {
-      this.textureMode = 2;
+      value = 2;
     }
-    console.log(this.value);
-    console.log(this.textureMode);
+    selectedObject.changeTexture(value);
+    selectedCubePart.changeTexture(value);
     if (!rotate) drawScene();
   });
 
@@ -559,7 +560,7 @@ function main() {
 
     // console.log(selectedObject);
 
-    selectedObject.draw(projectionMatrix, selectedObject.modelMatrix, modelViewMatrix, normalMatrix, viewLightDirection, enableShading, textureMode);
+    selectedObject.draw(projectionMatrix, selectedObject.modelMatrix, modelViewMatrix, normalMatrix, viewLightDirection, enableShading);
 
   }
 
@@ -616,7 +617,7 @@ function main() {
     // Combined matrix
     // const matrix = m4.multiply(projectionMatrix, modelViewMatrix);
 
-    cube.draw(projectionMatrix, cube.modelMatrix, modelViewMatrix, normalMatrix, viewLightDirection, enableShading, textureMode);
+    cube.draw(projectionMatrix, cube.modelMatrix, modelViewMatrix, normalMatrix, viewLightDirection, enableShading);
     drawSelectedObject();
   }
 

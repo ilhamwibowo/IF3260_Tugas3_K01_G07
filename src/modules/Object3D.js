@@ -51,6 +51,10 @@ class Object3D {
     this.modelMatrix = m4.scale(this.modelMatrix, sx, sy, sz);
   }
 
+  changeTexture(mode) {
+    this.textureMode = mode;
+  }
+
   // Save current buffers to be used later.
   saveObject() {
     // Apply modelMatrix to vertices.
@@ -106,7 +110,7 @@ class Object3D {
     return buffer;
   }
 
-  draw(projectionMatrix, modelMatrix, modelViewMatrix, normalMatrix, lightDirection, enableShading, textureMode) {
+  draw(projectionMatrix, modelMatrix, modelViewMatrix, normalMatrix, lightDirection, enableShading) {
     // Tell webgl to use our program .
     this.gl.useProgram(this.shaderProgram.program);
 
@@ -146,7 +150,9 @@ class Object3D {
     this.gl.uniform1i(this.shaderProgram.uniformLocations.enableShading, enableShading);
 
     // Set the texture on or off.
-    this.gl.uniform1i(this.shaderProgram.uniformLocations.textureMode, textureMode);
+    this.gl.uniform1i(this.shaderProgram.uniformLocations.textureMode, this.textureMode);
+
+    console.log(this.textureMode);
 
     // Texture image
     this.gl.uniform1i(this.shaderProgram.uniformLocations.textureImage, 0);
